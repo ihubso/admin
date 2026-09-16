@@ -357,38 +357,38 @@
             </div>
 
             <div class="nav-section">Main</div>
-            <a href="/admin-dashboard.html" class="nav-item">
+            <a href="//admin-dashboard/" class="nav-item">
                 <i class="fas fa-chart-pie"></i> Dashboard
             </a>
-            <a href="/admin-analytics.html" class="nav-item">
+            <a href="//admin-analytics/" class="nav-item">
                 <i class="fas fa-chart-line"></i> Analytics
             </a>
-            <a href="/admin-orders.html" class="nav-item active">
+            <a href="//admin-orders/" class="nav-item active">
                 <i class="fas fa-shopping-bag"></i> Orders
             </a>
-            <a href="/admin-customers.html" class="nav-item">
+            <a href="//admin-customers/" class="nav-item">
                 <i class="fas fa-users"></i> Customers
             </a>
-            <a href="/admin-reviews.html" class="nav-item">
+            <a href="/admin-reviews/" class="nav-item">
                 <i class="fas fa-star"></i> Reviews
             </a>
 
             <div class="nav-section">Products</div>
-            <a href="/admin-add-product.html" class="nav-item">
+            <a href="//admin-add-product/" class="nav-item">
                 <i class="fas fa-plus-circle"></i> Add Product
             </a>
-            <a href="/admin-products.html" class="nav-item">
+            <a href="//admin-products/" class="nav-item">
                 <i class="fas fa-boxes"></i> Product List
             </a>
 
             <div class="nav-section">Settings</div>
-            <a href="/admin-business-info.html" class="nav-item">
+            <a href="//admin-business-info/" class="nav-item">
                 <i class="fas fa-store"></i> Business Info
             </a>
-            <a href="/admin-featured.html" class="nav-item">
+            <a href="//admin-featured/" class="nav-item">
                 <i class="fas fa-star"></i> Featured Product
             </a>
-            <a href="/admin-contact.html" class="nav-item">
+            <a href="//admin-contact/" class="nav-item">
                 <i class="fas fa-map-marker-alt"></i> Contact & Location
             </a>
 
@@ -490,7 +490,7 @@
                             <button class="btn-notify" id="notifyBtn" onclick="notifyCustomer()">
                                 <i class="fas fa-bell"></i> Notify Customer
                             </button>
-                            <a href="/admin-orders.html" class="btn-back">
+                            <a href="//admin-orders/" class="btn-back">
                                 <i class="fas fa-arrow-left"></i> Back
                             </a>
                         </div>
@@ -570,7 +570,7 @@
                     <i class="fas fa-exclamation-circle" style="font-size:24px;color:#EF4444;display:block;margin-bottom:8px;"></i>
                     No order ID specified
                     <div style="margin-top:12px;">
-                        <a href="/admin-orders.html" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
+                        <a href="//admin-orders/" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
                     </div>
                 `;
                 return;
@@ -599,7 +599,7 @@
                         <i class="fas fa-box-open" style="font-size:24px;color:#F59E0B;display:block;margin-bottom:8px;"></i>
                         Order not found
                         <div style="margin-top:12px;">
-                            <a href="/admin-orders.html" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
+                            <a href="//admin-orders/" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
                         </div>
                     `;
                     return;
@@ -616,7 +616,7 @@
                     <i class="fas fa-exclamation-circle" style="font-size:24px;color:#EF4444;display:block;margin-bottom:8px;"></i>
                     Failed to load order: ${err.message}
                     <div style="margin-top:12px;">
-                        <a href="/admin-orders.html" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
+                        <a href="//admin-orders/" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
                     </div>
                 `;
             }
@@ -895,6 +895,6 @@
                 if (sidebar.classList.contains('open')) toggleSidebar();
             }
         });
-    </script>
+    </script><script src="/push-client.js"></script>
 </body>
 </html>

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orders · Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #0F172A;
+        }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: #0F172A;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+        }
+        .sidebar .brand .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        .sidebar .brand .name { font-weight: 700; font-size: 16px; }
+        .sidebar .brand .name span { color: #8B6BE8; }
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar .nav-item.active { background: rgba(108,60,225,0.2); color: #8B6BE8; }
+        .sidebar .nav-item i { width: 20px; font-size: 16px; }
+        .sidebar .nav-item .badge {
+            margin-left: auto;
+            background: #EF4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .sidebar .nav-section {
+            padding: 12px 14px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sidebar .logout-btn {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 16px;
+        }
+        .sidebar .logout-btn .nav-item { color: rgba(255,255,255,0.4); }
+        .sidebar .logout-btn .nav-item:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+        .main-content {
+            margin-left: 260px;
+            padding: 24px 32px;
+            width: 100%;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .topbar h1 { font-size: 24px; font-weight: 800; }
+        .topbar .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar .admin-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6C3CE1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+        }
+        .filter-bar select, .filter-bar input {
+            padding: 8px 14px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            font-family: inherit;
+            background: white;
+        }
+        .filter-bar select:focus, .filter-bar input:focus {
+            border-color: #6C3CE1;
+        }
+        .filter-bar button {
+            padding: 8px 16px;
+            background: #6C3CE1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .filter-bar button:hover { background: #5A2FC4; }
+        .filter-bar button.secondary { background: #E2E8F0; color: #475569; }
+        .filter-bar button.secondary:hover { background: #CBD5E1; }
+        .orders-table {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #f0f0f0;
+            overflow: hidden;
+        }
+        .orders-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .orders-table th {
+            text-align: left;
+            padding: 14px 18px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #E2E8F0;
+            background: #f8fafc;
+        }
+        .orders-table td {
+            padding: 14px 18px;
+            font-size: 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        .orders-table tr:hover td { background: #f8fafc; }
+        .orders-table .status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 12px;
+            text-transform: capitalize;
+            display: inline-block;
+        }
+        .status-badge.pending { background: #FEF3C7; color: #D97706; }
+        .status-badge.confirmed { background: #D1FAE5; color: #059669; }
+        .status-badge.processing { background: #DBEAFE; color: #2563EB; }
+        .status-badge.shipped { background: #DBEAFE; color: #2563EB; }
+        .status-badge.delivered { background: #D1FAE5; color: #059669; }
+        .status-badge.cancelled { background: #FEE2E2; color: #DC2626; }
+        .orders-table .action-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            margin-right: 4px;
+        }
+        .orders-table .action-btn.view { background: #E2E8F0; color: #475569; }
+        .orders-table .action-btn.view:hover { background: #6C3CE1; color: white; }
+        .orders-table .action-btn.update {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+        .orders-table .action-btn.update:hover { background: #2563EB; color: white; }
+        .orders-table .action-btn.delete {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+        .orders-table .action-btn.delete:hover { background: #DC2626; color: white; }
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .pagination button {
+            padding: 6px 14px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            background: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .pagination button:hover { border-color: #6C3CE1; color: #6C3CE1; }
+        .pagination button.active {
+            background: #6C3CE1;
+            color: white;
+            border-color: #6C3CE1;
+        }
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #0F172A;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 90%;
+            text-align: center;
+            animation: toastUp 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+        .toast-msg.success { background: #10B981; }
+        .toast-msg.error { background: #EF4444; }
+        @keyframes toastUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        .toast-msg.hide {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            .mobile-toggle { display: block; }
+            .topbar h1 { font-size: 20px; }
+            .orders-table {
+                overflow-x: auto;
+                display: block;
+            }
+            .orders-table table { min-width: 700px; }
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="logo">ST</div>
+                <div class="name">Sucess<span>Tech</span></div>
+            </div>
+
+            <div class="nav-section">Main</div>
+            <a href="/admin-dashboard/" class="nav-item">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="/admin-analytics/" class="nav-item">
+                <i class="fas fa-chart-line"></i> Analytics
+            </a>
+            <a href="/admin-orders/" class="nav-item active">
+                <i class="fas fa-shopping-bag"></i> Orders
+                <span class="badge" id="orderBadge">0</span>
+            </a>
+            <a href="/admin-customers/" class="nav-item">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a href="admin-reviews/" class="nav-item">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+
+            <div class="nav-section">Products</div>
+            <a href="/admin-add-product/" class="nav-item">
+                <i class="fas fa-plus-circle"></i> Add Product
+            </a>
+            <a href="/admin-products/" class="nav-item">
+                <i class="fas fa-boxes"></i> Product List
+            </a>
+
+            <div class="nav-section">Settings</div>
+            <a href="/admin-business-info/" class="nav-item">
+                <i class="fas fa-store"></i> Business Info
+            </a>
+            <a href="/admin-featured/" class="nav-item">
+                <i class="fas fa-star"></i> Featured Product
+            </a>
+            <a href="/admin-contact/" class="nav-item">
+                <i class="fas fa-map-marker-alt"></i> Contact & Location
+            </a>
+                        <a href="/admin-category-showcase/" class="nav-item">
+                <i class="fas fa-layer-group"></i> Category Showcase
+            </a>
+
+            <div class="logout-btn">
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="mobile-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>📋 Orders</h1>
+                </div>
+                <div class="admin-info">
+                    <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
+                    <div class="avatar" id="adminAvatar">A</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <input type="text" id="searchInput" placeholder="Search by order ID or customer..." />
+                <button onclick="loadOrders()"><i class="fas fa-search"></i> Filter</button>
+                <button class="secondary" onclick="resetFilters()">Reset</button>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="orders-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersBody">
+                        <tr>
+                            <td colspan="6" style="text-align:center;padding:40px;color:#94A3B8;">
+                                <i class="fas fa-spinner fa-spin"></i> Loading orders...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="pagination" id="pagination">
+                    <button onclick="prevPage()" id="prevBtn">←</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button onclick="nextPage()" id="nextBtn">→</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ADMIN ORDERS
+        // ============================================================
+
+        const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+        let supabaseClient = null;
+        let currentPage = 1;
+        const perPage = 10;
+        let totalOrders = 0;
+        let ordersData = [];
+
+        function getSupabase() {
+            if (supabaseClient) return supabaseClient;
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return supabaseClient;
+            }
+            return null;
+        }
+
+        function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
+            if (!session || !session.loggedIn) {
+                window.location.href = 'index.html';
+                return false;
+            }
+            const name = session.user?.email?.split('@')[0] || 'Admin';
+            document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+            document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+            return true;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_session');
+            window.location.href = 'index.html';
+        }
+
+        function showToast(msg, type = 'success') {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Load Orders ---
+        async function loadOrders(page = 1) {
+            const client = getSupabase();
+            if (!client) return;
+
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchInput').value.trim();
+
+            currentPage = page;
+
+            try {
+                let query = client
+                    .from('orders')
+                    .select('*', { count: 'exact' });
+
+                if (status !== 'all') {
+                    query = query.eq('status', status);
+                }
+
+                if (search) {
+                    query = query.or(`id.ilike.%${search}%,customer_name.ilike.%${search}%,email.ilike.%${search}%`);
+                }
+
+                const start = (page - 1) * perPage;
+                const end = start + perPage - 1;
+
+                const { data, error, count } = await query
+                    .order('created_at', { ascending: false })
+                    .range(start, end);
+
+                if (error) throw error;
+
+                ordersData = data || [];
+                totalOrders = count || 0;
+
+                renderOrders(ordersData);
+                updatePagination();
+
+                // Update badge
+                document.getElementById('orderBadge').textContent = totalOrders;
+
+            } catch (err) {
+                console.error('Error loading orders:', err);
+                showToast('Failed to load orders', 'error');
+            }
+        }
+
+        // --- Render Orders ---
+        function renderOrders(orders) {
+            const body = document.getElementById('ordersBody');
+
+            if (!orders || orders.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:40px;color:#94A3B8;">
+                            <i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                            No orders found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            body.innerHTML = orders.map(order => `
+                <tr>
+                    <td><strong>#${order.id}</strong></td>
+                    <td>
+                        ${order.customer_name || 'Customer'}<br />
+                        <small style="color:#94A3B8;font-size:12px;">${order.email || ''}</small>
+                    </td>
+                    <td><strong>FCFA ${(order.total || 0).toFixed(2)}</strong></td>
+                    <td>
+                        <span class="status-badge ${order.status || 'pending'}">
+                            ${order.status || 'Pending'}
+                        </span>
+                    </td>
+                    <td style="font-size:13px;color:#64748B;">
+                        ${order.created_at ? new Date(order.created_at).toLocaleDateString() : '-'}
+                    </td>
+                    <td>
+                        <button class="action-btn view" onclick="viewOrder('${order.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn update" onclick="updateOrderStatus('${order.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteOrder('${order.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Update Pagination ---
+        function updatePagination() {
+            const totalPages = Math.ceil(totalOrders / perPage);
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        function prevPage() {
+            if (currentPage > 1) loadOrders(currentPage - 1);
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(totalOrders / perPage);
+            if (currentPage < totalPages) loadOrders(currentPage + 1);
+        }
+
+        function resetFilters() {
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('searchInput').value = '';
+            loadOrders(1);
+        }
+
+   
+        function viewOrder(orderId) {
+              window.location.href = `/vievorder/?order=${orderId}`, '_blank';
+        }
+
+        // --- Update Order Status ---
+        function updateOrderStatus(orderId) {
+            const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+            const current = ordersData.find(o => o.id === orderId)?.status || 'pending';
+
+            // Create a simple prompt with buttons
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                backdrop-filter: blur(4px);
+            `;
+            modal.innerHTML = `
+                <div style="background:white;border-radius:16px;padding:24px 32px;max-width:400px;width:90%;">
+                    <h3 style="font-weight:700;font-size:18px;margin-bottom:12px;">Update Order Status</h3>
+                    <p style="font-size:14px;color:#64748B;margin-bottom:16px;">Order #${orderId}</p>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        ${statuses.map(status => `
+                            <button onclick="setOrderStatus('${orderId}','${status}')" 
+                                    style="padding:10px 16px;border:2px solid ${status === current ? '#6C3CE1' : '#E2E8F0'};border-radius:8px;background:${status === current ? 'rgba(108,60,225,0.05)' : 'white'};font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.2s ease;">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                                ${status === current ? ' ✓' : ''}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <button onclick="this.closest('div[style]').parentElement.remove()" 
+                            style="margin-top:16px;padding:10px;width:100%;border:2px solid #E2E8F0;border-radius:8px;background:white;font-weight:600;cursor:pointer;font-family:inherit;">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) this.remove();
+            });
+        }
+
+        // --- Set Order Status (FIXED) ---
+        async function setOrderStatus(orderId, newStatus) {
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                // Find the order in ordersData
+                const order = ordersData.find(o => o.id === orderId);
+                
+                // Update in Supabase
+                const { error } = await client
+                    .from('orders')
+                    .update({ status: newStatus })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                // Send push notification if customer_id exists
+                if (order && order.customer_id) {
+                    try {
+                        await sendOrderPushNotification(orderId, newStatus, order.customer_id);
+                    } catch (notifError) {
+                        console.warn('Push notification failed:', notifError);
+                        // Don't fail the status update if notification fails
+                    }
+                }
+
+                showToast(`✅ Order ${orderId} updated to ${newStatus}`);
+                
+                // Close modal
+                const modal = document.querySelector('div[style*="position: fixed;"]');
+                if (modal) modal.remove();
+                
+                // Reload orders
+                loadOrders(currentPage);
+
+            } catch (err) {
+                console.error('Error updating order:', err);
+                showToast('❌ Failed to update order', 'error');
+            }
+        }
+
+        // --- Delete Order ---
+        async function deleteOrder(orderId) {
+            if (!confirm(`Delete order #${orderId}? This action cannot be undone.`)) return;
+
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                const { error } = await client
+                    .from('orders')
+                    .delete()
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                showToast(`🗑️ Order ${orderId} deleted`);
+                loadOrders(currentPage);
+
+            } catch (err) {
+                console.error('Error deleting order:', err);
+                showToast('❌ Failed to delete order', 'error');
+            }
+        }
+
+        // --- Send Order Push Notification (from VAPID_CONFIG.js) ---
+        async function sendOrderPushNotification(orderId, status, customerId = null) {
+            try {
+                const supabaseUrl = 'https://bulprhgwuwatzobiojwz.supabase.co';
+                const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+                // Find the order
+                const order = ordersData.find(o => o.id === orderId);
+                if (!order) {
+                    console.warn('⚠️ Order not found:', orderId);
+                    return false;
+                }
+
+                // Determine customer ID
+                let targetUserId = customerId;
+                if (!targetUserId) {
+                    // Use guest identifier
+                    targetUserId = 'user_guest_' + (order.phone || '').replace(/\D/g, '');
+                }
+
+                // Prepare notification message based on status
+                const statusMessages = {
+                    confirmed: {
+                        title: '✅ Order Confirmed!',
+                        body: `Your order #${orderId} has been confirmed. We'll notify you when it's being processed.`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    processing: {
+                        title: '🔄 Order Being Processed!',
+                        body: `Your order #${orderId} is now being processed. We'll ship it soon!`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    shipped: {
+                        title: '📦 Order Shipped!',
+                        body: `Your order #${orderId} has been shipped. Track your delivery soon!`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    delivered: {
+                        title: '✅ Order Delivered!',
+                        body: `Your order #${orderId} has been delivered. Thank you for shopping with us!`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    cancelled: {
+                        title: '❌ Order Cancelled',
+                        body: `Your order #${orderId} has been cancelled. If you have questions, please contact us.`,
+                        url: `/orders/?order=${orderId}`
+                    }
+                };
+
+                const message = statusMessages[status];
+                if (!message) {
+                    console.warn('⚠️ Unknown status:', status);
+                    return false;
+                }
+
+                // Send notification via Supabase Edge Function
+                const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseAnonKey}`
+                    },
+                    body: JSON.stringify({
+                        targetUserId: targetUserId,
+                        title: message.title,
+                        body: message.body,
+                        data: {
+                            url: `/orders/?order=${orderId}`,
+                            orderId: orderId,
+                            status: status
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+                    }
+                    
+                    if (errorData.error && errorData.error.includes('No active push subscription')) {
+                        console.log('ℹ️ User has no push subscription');
+                        return false;
+                    }
+                    
+                    console.error('❌ Server error:', errorData);
+                    return false;
+                }
+
+                const result = await response.json();
+                console.log(`📤 Order notification sent for #${orderId}:`, result);
+                return true;
+
+            } catch (error) {
+                console.error('❌ Error sending order notification:', error);
+                return false;
+            }
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                loadOrders(1);
+                document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+                
+                // Enter key to search
+                document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') loadOrders(1);
+                });
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) toggleSidebar();
+                // Close any open modals
+                document.querySelector('div[style*="position: fixed;"]')?.remove();
+            }
+        });
+    </script><script src="push-client.js"></script>
+</body>
+</html>

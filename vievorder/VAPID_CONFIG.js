@@ -3,10 +3,6 @@ const VAPID_CONFIG = {
     // This is your VAPID public key - keep this visible
     publicKey: 'BI-tM9VQcqAeco67R9VhA9TxByJyFjPgcMcqS_dhfOsve-BcVA5G_0fQIK9uVcECs_sbqnUGWOa1t5kFs-94FRg',
     
-    // NEVER expose private key in client-side code!
-    // This should only be used on the server
-    privateKey: 'Y0tevI6hf8uyKQr1rqOzXjTOGTBKT4Fz_VV9jnYrlOs',
-    
     // Your contact email for the notification service
     email: 'austinlebechi02@gmail.com',
     

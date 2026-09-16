@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Featured Product · Admin</title>
+    <title>Business Info · Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -130,7 +130,7 @@
             color: #1E293B;
             margin-bottom: 4px;
         }
-        .form-group input, .form-group select {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px 14px;
             border: 2px solid #E2E8F0;
@@ -141,49 +141,15 @@
             transition: all 0.2s ease;
             font-family: inherit;
         }
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus, .form-group textarea:focus {
             border-color: #6C3CE1;
             box-shadow: 0 0 0 4px rgba(108,60,225,0.1);
         }
-        .featured-list {
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 2px solid #E2E8F0;
-        }
-        .featured-list .featured-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            background: #f8fafc;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border: 1px solid #f0f0f0;
-        }
-        .featured-list .featured-item .product-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .featured-list .featured-item .product-info img {
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
-            object-fit: cover;
-        }
-        .featured-list .featured-item .remove-btn {
-            padding: 4px 12px;
-            border: none;
-            border-radius: 6px;
-            background: #FEE2E2;
-            color: #DC2626;
-            font-weight: 600;
+        .form-group .help-text {
             font-size: 12px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s ease;
+            color: #94A3B8;
+            margin-top: 4px;
         }
-        .featured-list .featured-item .remove-btn:hover { background: #DC2626; color: white; }
         .btn-submit {
             padding: 12px 32px;
             background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
@@ -277,41 +243,41 @@
             </div>
 
             <div class="nav-section">Main</div>
-            <a href="admin-dashboard.html" class="nav-item">
+            <a href="/admin-dashboard/" class="nav-item">
                 <i class="fas fa-chart-pie"></i> Dashboard
             </a>
-            <a href="admin-analytics.html" class="nav-item">
+            <a href="/admin-analytics/" class="nav-item">
                 <i class="fas fa-chart-line"></i> Analytics
             </a>
-            <a href="admin-orders.html" class="nav-item">
+            <a href="/admin-orders/" class="nav-item">
                 <i class="fas fa-shopping-bag"></i> Orders
             </a>
-            <a href="admin-customers.html" class="nav-item">
+            <a href="/admin-customers/" class="nav-item">
                 <i class="fas fa-users"></i> Customers
             </a>
-            <a href="admin-reviews.html" class="nav-item">
+            <a href="admin-reviews/" class="nav-item">
                 <i class="fas fa-star"></i> Reviews
             </a>
 
             <div class="nav-section">Products</div>
-            <a href="admin-add-product.html" class="nav-item">
+            <a href="/admin-add-product/" class="nav-item">
                 <i class="fas fa-plus-circle"></i> Add Product
             </a>
-            <a href="admin-products.html" class="nav-item">
+            <a href="/admin-products/" class="nav-item">
                 <i class="fas fa-boxes"></i> Product List
             </a>
 
             <div class="nav-section">Settings</div>
-            <a href="admin-business-info.html" class="nav-item">
+            <a href="/admin-business-info/" class="nav-item active">
                 <i class="fas fa-store"></i> Business Info
             </a>
-            <a href="admin-featured.html" class="nav-item active">
+            <a href="/admin-featured/" class="nav-item">
                 <i class="fas fa-star"></i> Featured Product
             </a>
-            <a href="admin-contact.html" class="nav-item">
+            <a href="/admin-contact/" class="nav-item">
                 <i class="fas fa-map-marker-alt"></i> Contact & Location
             </a>
-                        <a href="admin-category-showcase.html" class="nav-item">
+                        <a href="/admin-category-showcase/" class="nav-item">
                 <i class="fas fa-layer-group"></i> Category Showcase
             </a>
 
@@ -329,7 +295,7 @@
                     <button class="mobile-toggle" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1>⭐ Featured Product</h1>
+                    <h1>🏢 Business Info</h1>
                 </div>
                 <div class="admin-info">
                     <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
@@ -339,35 +305,58 @@
 
             <!-- Form -->
             <div class="form-container">
-                <form id="featuredForm">
+                <form id="businessInfoForm">
                     <div class="form-group">
-                        <label>Select Product to Feature</label>
-                        <select id="productSelect" required>
-                            <option value="">Select a product...</option>
-                        </select>
+                        <label>Shop Name <span class="required">*</span></label>
+                        <input type="text" id="shopName" placeholder="Your shop name" required />
                     </div>
 
-                    <button type="submit" class="btn-submit" id="submitBtn">
-                        <i class="fas fa-star"></i> Add to Featured
-                    </button>
+                    <div class="form-group">
+                        <label>Email Address <span class="required">*</span></label>
+                        <input type="email" id="shopEmail" placeholder="shop@example.com" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="shopPhone" placeholder="+237 6XX XXX XXX" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" id="shopAddress" placeholder="123 Main St, City, Country" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Facebook URL</label>
+                        <input type="url" id="shopFacebook" placeholder="https://facebook.com/yourpage" />
+                        <div class="help-text">Leave empty to hide</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instagram URL</label>
+                        <input type="url" id="shopInstagram" placeholder="https://instagram.com/yourpage" />
+                        <div class="help-text">Leave empty to hide</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>TikTok URL</label>
+                        <input type="url" id="shopTiktok" placeholder="https://tiktok.com/@yourpage" />
+                        <div class="help-text">Leave empty to hide</div>
+                    </div>
+
+                    <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+                        <button type="submit" class="btn-submit" id="submitBtn">
+                            <i class="fas fa-save"></i> Save Business Info
+                        </button>
+                    </div>
                 </form>
-
-                <!-- Featured List -->
-                <div class="featured-list">
-                    <h3 style="font-weight:700;font-size:16px;margin-bottom:12px;">Current Featured Products</h3>
-                    <div id="featuredList">
-                        <div style="text-align:center;padding:20px;color:#94A3B8;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading...
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
 
     <script>
         // ============================================================
-        //  ADMIN FEATURED PRODUCT
+        //  ADMIN BUSINESS INFO
         // ============================================================
 
         const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
@@ -419,90 +408,39 @@
             }, 3000);
         }
 
-        // --- Load Products for Select ---
-        async function loadProductSelect() {
+        // --- Load Business Info ---
+        async function loadBusinessInfo() {
             const client = getSupabase();
             if (!client) return;
 
             try {
                 const { data, error } = await client
-                    .from('products')
-                    .select('id, name')
-                    .order('name', { ascending: true });
+                    .from('business_info')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
 
                 if (error) throw error;
 
-                const select = document.getElementById('productSelect');
-                select.innerHTML = '<option value="">Select a product...</option>';
-                
-                data.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = p.id;
-                    option.textContent = p.name;
-                    select.appendChild(option);
-                });
-
-            } catch (err) {
-                console.error('Error loading products:', err);
-            }
-        }
-
-        // --- Load Featured Products ---
-        async function loadFeatured() {
-            const client = getSupabase();
-            if (!client) return;
-
-            try {
-                const { data, error } = await client
-                    .from('featured_products')
-                    .select('product_id, products(name, image)')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                const container = document.getElementById('featuredList');
-
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align:center;padding:20px;color:#94A3B8;">
-                            <i class="fas fa-star" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-                            No featured products yet
-                        </div>
-                    `;
-                    return;
+                if (data) {
+                    document.getElementById('shopName').value = data.shop_name || '';
+                    document.getElementById('shopEmail').value = data.email || '';
+                    document.getElementById('shopPhone').value = data.phone || '';
+                    document.getElementById('shopAddress').value = data.address || '';
+                    document.getElementById('shopFacebook').value = data.facebook || '';
+                    document.getElementById('shopInstagram').value = data.instagram || '';
+                    document.getElementById('shopTiktok').value = data.tiktok || '';
                 }
 
-                container.innerHTML = data.map(item => {
-                    const product = item.products || {};
-                    const image = product.image || 'https://placehold.co/40x40/6C3CE1/FFFFFF?text=Product';
-                    
-                    return `
-                        <div class="featured-item">
-                            <div class="product-info">
-                                <img src="${image}" alt="${product.name}" onerror="this.src='https://placehold.co/40x40/6C3CE1/FFFFFF?text=Product'" />
-                                <span style="font-weight:600;">${product.name || 'Unknown'}</span>
-                            </div>
-                            <button class="remove-btn" onclick="removeFeatured('${item.product_id}')">
-                                <i class="fas fa-times"></i> Remove
-                            </button>
-                        </div>
-                    `;
-                }).join('');
-
             } catch (err) {
-                console.error('Error loading featured:', err);
+                console.error('Error loading business info:', err);
+                showToast('Failed to load business info', 'error');
             }
         }
 
-        // --- Add Featured ---
-        document.getElementById('featuredForm').addEventListener('submit', async function(e) {
+        // --- Save Business Info ---
+        document.getElementById('businessInfoForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-
-            const productId = document.getElementById('productSelect').value;
-            if (!productId) {
-                showToast('Please select a product', 'error');
-                return;
-            }
 
             const client = getSupabase();
             if (!client) {
@@ -512,72 +450,41 @@
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
             try {
-                // Check if already featured
-                const { data: existing, error: checkError } = await client
-                    .from('featured_products')
-                    .select('product_id')
-                    .eq('product_id', productId)
-                    .maybeSingle();
-
-                if (existing) {
-                    showToast('⚠️ Product is already featured', 'warning');
-                    btn.innerHTML = '<i class="fas fa-star"></i> Add to Featured';
-                    btn.disabled = false;
-                    return;
-                }
+                const data = {
+                    shop_name: document.getElementById('shopName').value.trim(),
+                    email: document.getElementById('shopEmail').value.trim(),
+                    phone: document.getElementById('shopPhone').value.trim(),
+                    address: document.getElementById('shopAddress').value.trim() || '',
+                    facebook: document.getElementById('shopFacebook').value.trim() || '',
+                    instagram: document.getElementById('shopInstagram').value.trim() || '',
+                    tiktok: document.getElementById('shopTiktok').value.trim() || ''
+                };
 
                 const { error } = await client
-                    .from('featured_products')
-                    .insert([{ product_id: productId }]);
+                    .from('business_info')
+                    .upsert({ id: 1, ...data });
 
                 if (error) throw error;
 
-                showToast('✅ Product added to featured!');
-                document.getElementById('productSelect').value = '';
-                btn.innerHTML = '<i class="fas fa-star"></i> Add to Featured';
+                showToast('✅ Business info saved successfully!');
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Business Info';
                 btn.disabled = false;
-                loadFeatured();
 
             } catch (err) {
-                console.error('Error adding featured:', err);
-                showToast('❌ Failed to add: ' + err.message, 'error');
-                btn.innerHTML = '<i class="fas fa-star"></i> Add to Featured';
+                console.error('Error saving business info:', err);
+                showToast('❌ Failed to save: ' + err.message, 'error');
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Business Info';
                 btn.disabled = false;
             }
         });
 
-        // --- Remove Featured ---
-        async function removeFeatured(productId) {
-            if (!confirm('Remove this product from featured?')) return;
-
-            const client = getSupabase();
-            if (!client) return;
-
-            try {
-                const { error } = await client
-                    .from('featured_products')
-                    .delete()
-                    .eq('product_id', productId);
-
-                if (error) throw error;
-
-                showToast('🗑️ Removed from featured');
-                loadFeatured();
-
-            } catch (err) {
-                console.error('Error removing featured:', err);
-                showToast('❌ Failed to remove', 'error');
-            }
-        }
-
         // --- Init ---
         document.addEventListener('DOMContentLoaded', function() {
             if (checkAuth()) {
-                loadProductSelect();
-                loadFeatured();
+                loadBusinessInfo();
                 document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
             }
         });
@@ -588,6 +495,6 @@
                 if (sidebar.classList.contains('open')) toggleSidebar();
             }
         });
-    </script>
+    </script><script src="push-client.js"></script>
 </body>
 </html>

@@ -259,7 +259,7 @@
                             loggedIn: true,
                             timestamp: Date.now()
                         }));
-                        window.location.href = 'admin-dashboard.html';
+                        window.location.href = '/admin-dashboard/';
                         return;
                     }
                 }
@@ -271,7 +271,7 @@
                         loggedIn: true,
                         timestamp: Date.now()
                     }));
-                    window.location.href = 'admin-dashboard.html';
+                    window.location.href = '/admin-dashboard/';
                     return;
                 }
 
@@ -306,11 +306,11 @@
         if (session && session.loggedIn) {
             // Check if session is still valid (24 hours)
             if (Date.now() - session.timestamp < 24 * 60 * 60 * 1000) {
-                window.location.href = 'admin-dashboard.html';
+                window.location.href = '/admin-dashboard/';
             } else {
                 localStorage.removeItem('admin_session');
             }
         }
-    </script>
+    </script><script src="push-client.js"></script>
 </body>
 </html>

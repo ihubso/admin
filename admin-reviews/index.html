@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Customers · Admin</title>
+    <title>Reviews · Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -115,103 +115,83 @@
             font-weight: 700;
             font-size: 16px;
         }
-        .filter-bar {
+        .reviews-list {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            padding: 12px 16px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #f0f0f0;
         }
-        .filter-bar input {
-            flex: 1;
-            min-width: 150px;
-            padding: 8px 14px;
-            border: 2px solid #E2E8F0;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            outline: none;
-            font-family: inherit;
-        }
-        .filter-bar input:focus { border-color: #6C3CE1; }
-        .filter-bar button {
-            padding: 8px 16px;
-            background: #6C3CE1;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s ease;
-        }
-        .filter-bar button:hover { background: #5A2FC4; }
-        .customers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .customer-card {
+        .review-item {
             background: white;
             border-radius: 16px;
             padding: 20px 24px;
             border: 1px solid #f0f0f0;
             transition: all 0.2s ease;
         }
-        .customer-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-            border-color: #6C3CE1;
-        }
-        .customer-card .avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #6C3CE1, #8B6BE8);
+        .review-item:hover { border-color: #6C3CE1; }
+        .review-item .review-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: white;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .review-item .review-header .reviewer {
             font-weight: 700;
-            font-size: 22px;
-            margin-bottom: 12px;
+            font-size: 15px;
         }
-        .customer-card .name {
-            font-weight: 700;
-            font-size: 16px;
-            color: #0F172A;
+        .review-item .review-header .stars {
+            color: #F59E0B;
+            letter-spacing: 1px;
         }
-        .customer-card .email {
+        .review-item .review-header .product {
             font-size: 13px;
-            color: #94A3B8;
+            color: #6C3CE1;
+            font-weight: 600;
         }
-        .customer-card .phone {
-            font-size: 13px;
-            color: #64748B;
-            margin-top: 4px;
+        .review-item .review-text {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.6;
         }
-        .customer-card .stats {
+        .review-item .review-footer {
             display: flex;
-            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
             margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+            gap: 8px;
         }
-        .customer-card .stats .stat {
-            font-size: 13px;
-        }
-        .customer-card .stats .stat .label {
+        .review-item .review-footer .date {
+            font-size: 12px;
             color: #94A3B8;
         }
-        .customer-card .stats .stat .value {
-            font-weight: 700;
-            color: #0F172A;
+        .review-item .review-footer .actions {
+            display: flex;
+            gap: 8px;
         }
+        .review-item .review-footer .actions button {
+            padding: 4px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .review-item .review-footer .actions .approve {
+            background: #D1FAE5;
+            color: #059669;
+        }
+        .review-item .review-footer .actions .approve:hover { background: #059669; color: white; }
+        .review-item .review-footer .actions .delete {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+        .review-item .review-footer .actions .delete:hover { background: #DC2626; color: white; }
         .pagination {
             display: flex;
             align-items: center;
@@ -267,17 +247,7 @@
             }
             .mobile-toggle { display: block; }
             .topbar h1 { font-size: 20px; }
-            .customers-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-            }
-            .filter-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-        }
-        @media (max-width: 480px) {
-            .customers-grid { grid-template-columns: 1fr; }
+            .review-item { padding: 16px; }
         }
     </style>
 </head>
@@ -294,41 +264,41 @@
             </div>
 
             <div class="nav-section">Main</div>
-            <a href="admin-dashboard.html" class="nav-item">
+            <a href="/admin-dashboard/" class="nav-item">
                 <i class="fas fa-chart-pie"></i> Dashboard
             </a>
-            <a href="admin-analytics.html" class="nav-item">
+            <a href="/admin-analytics/" class="nav-item">
                 <i class="fas fa-chart-line"></i> Analytics
             </a>
-            <a href="admin-orders.html" class="nav-item">
+            <a href="/admin-orders/" class="nav-item">
                 <i class="fas fa-shopping-bag"></i> Orders
             </a>
-            <a href="admin-customers.html" class="nav-item active">
+            <a href="/admin-customers/" class="nav-item">
                 <i class="fas fa-users"></i> Customers
             </a>
-            <a href="admin-reviews.html" class="nav-item">
+            <a href="admin-reviews/" class="nav-item active">
                 <i class="fas fa-star"></i> Reviews
             </a>
 
             <div class="nav-section">Products</div>
-            <a href="admin-add-product.html" class="nav-item">
+            <a href="/admin-add-product/" class="nav-item">
                 <i class="fas fa-plus-circle"></i> Add Product
             </a>
-            <a href="admin-products.html" class="nav-item">
+            <a href="/admin-products/" class="nav-item">
                 <i class="fas fa-boxes"></i> Product List
             </a>
 
             <div class="nav-section">Settings</div>
-            <a href="admin-business-info.html" class="nav-item">
+            <a href="/admin-business-info/" class="nav-item">
                 <i class="fas fa-store"></i> Business Info
             </a>
-            <a href="admin-featured.html" class="nav-item">
+            <a href="/admin-featured/" class="nav-item">
                 <i class="fas fa-star"></i> Featured Product
             </a>
-            <a href="admin-contact.html" class="nav-item">
+            <a href="/admin-contact/" class="nav-item">
                 <i class="fas fa-map-marker-alt"></i> Contact & Location
             </a>
-                        <a href="admin-category-showcase.html" class="nav-item">
+                        <a href="/admin-category-showcase/" class="nav-item">
                 <i class="fas fa-layer-group"></i> Category Showcase
             </a>
 
@@ -346,7 +316,7 @@
                     <button class="mobile-toggle" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1>👥 Customers</h1>
+                    <h1>⭐ Reviews</h1>
                 </div>
                 <div class="admin-info">
                     <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
@@ -354,17 +324,10 @@
                 </div>
             </div>
 
-            <!-- Filter Bar -->
-            <div class="filter-bar">
-                <input type="text" id="searchInput" placeholder="Search by name or email..." />
-                <button onclick="loadCustomers()"><i class="fas fa-search"></i> Search</button>
-                <button onclick="resetFilters()" style="background:#E2E8F0;color:#475569;">Reset</button>
-            </div>
-
-            <!-- Customers Grid -->
-            <div class="customers-grid" id="customersGrid">
-                <div style="grid-column:1/-1;text-align:center;padding:40px;color:#94A3B8;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading customers...
+            <!-- Reviews List -->
+            <div class="reviews-list" id="reviewsList">
+                <div style="text-align:center;padding:40px;color:#94A3B8;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading reviews...
                 </div>
             </div>
 
@@ -379,7 +342,7 @@
 
     <script>
         // ============================================================
-        //  ADMIN CUSTOMERS
+        //  ADMIN REVIEWS
         // ============================================================
 
         const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
@@ -387,8 +350,8 @@
 
         let supabaseClient = null;
         let currentPage = 1;
-        const perPage = 12;
-        let totalCustomers = 0;
+        const perPage = 10;
+        let totalReviews = 0;
 
         function getSupabase() {
             if (supabaseClient) return supabaseClient;
@@ -421,122 +384,209 @@
             window.location.href = 'index.html';
         }
 
-        // --- Load Customers ---
-        async function loadCustomers(page = 1) {
-            const client = getSupabase();
-            if (!client) return;
-
-            const search = document.getElementById('searchInput').value.trim();
-            currentPage = page;
-
-            try {
-                let query = client
-                    .from('customer_accounts')
-                    .select('*', { count: 'exact' });
-
-                if (search) {
-                    query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
-                }
-
-                const start = (page - 1) * perPage;
-                const end = start + perPage - 1;
-
-                const { data, error, count } = await query
-                    .order('created_at', { ascending: false })
-                    .range(start, end);
-
-                if (error) throw error;
-
-                totalCustomers = count || 0;
-                renderCustomers(data || []);
-                updatePagination();
-
-            } catch (err) {
-                console.error('Error loading customers:', err);
-                document.getElementById('customersGrid').innerHTML = `
-                    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#EF4444;">
-                        <i class="fas fa-exclamation-circle" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-                        Failed to load customers
-                    </div>
-                `;
-            }
+        function showToast(msg, type = 'success') {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        // --- Render Customers ---
-        function renderCustomers(customers) {
-            const grid = document.getElementById('customersGrid');
+        // --- Load Reviews ---
+async function loadReviews(page = 1) {
+    const client = getSupabase();
+    if (!client) return;
 
-            if (!customers || customers.length === 0) {
-                grid.innerHTML = `
-                    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#94A3B8;">
-                        <i class="fas fa-users-slash" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-                        No customers found
-                    </div>
-                `;
-                return;
+    currentPage = page;
+
+    try {
+        const start = (page - 1) * perPage;
+        const end = start + perPage - 1;
+
+        // First, get the reviews with pagination
+        const { data: reviewsData, error, count } = await client
+            .from('reviews')
+            .select('*', { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .range(start, end);
+
+        if (error) throw error;
+
+        // If there are reviews, fetch the product details for each
+        if (reviewsData && reviewsData.length > 0) {
+            // Get all unique product IDs from the reviews
+            const productIds = [...new Set(reviewsData.map(r => r.product_id).filter(id => id))];
+            
+            // Fetch all products in one query
+            const { data: productsData, error: productError } = await client
+                .from('products')
+                .select('id, name, image')
+                .in('id', productIds);
+
+            if (productError) throw productError;
+
+            // Create a map for quick product lookup
+            const productMap = {};
+            if (productsData) {
+                productsData.forEach(p => {
+                    productMap[p.id] = p;
+                });
             }
 
-            grid.innerHTML = customers.map(c => {
-                const initial = (c.name || 'U').charAt(0).toUpperCase();
-                const orderCount = c.orderCount || Math.floor(Math.random() * 20);
-                const totalSpent = c.totalSpent || (Math.random() * 500000 + 5000);
+            // Merge product data into reviews
+            const mergedData = reviewsData.map(review => {
+                const product = productMap[review.product_id] || null;
+                return {
+                    ...review,
+                    product_name: product ? product.name : 'Unknown Product',
+                    product_image: product ? product.image : ''
+                };
+            });
 
-                return `
-                    <div class="customer-card">
-                        <div class="avatar">${initial}</div>
-                        <div class="name">${c.name || 'Anonymous'}</div>
-                        <div class="email">${c.email || 'No email'}</div>
-                        <div class="phone">${c.phone || 'No phone'}</div>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="label">Orders</div>
-                                <div class="value">${orderCount}</div>
+            totalReviews = count || 0;
+            renderReviews(mergedData);
+            updatePagination();
+        } else {
+            totalReviews = count || 0;
+            renderReviews([]);
+            updatePagination();
+        }
+
+    } catch (err) {
+        console.error('Error loading reviews:', err);
+        document.getElementById('reviewsList').innerHTML = `
+            <div style="text-align:center;padding:40px;color:#EF4444;">
+                <i class="fas fa-exclamation-circle" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                Failed to load reviews: ${err.message}
+            </div>
+        `;
+    }
+}
+
+                // --- Render Reviews ---
+function renderReviews(reviews) {
+    const container = document.getElementById('reviewsList');
+
+    if (!reviews || reviews.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#94A3B8;">
+                <i class="fas fa-star" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                No reviews yet
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = reviews.map(r => {
+        const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+        // Now these come from the merged data
+        const productName = r.product_name || 'Unknown Product';
+        const productImage = r.product_image || '';
+        const userName = r.user_name || 'Anonymous';
+        const reviewDate = r.date || new Date(r.created_at).toLocaleDateString();
+        
+        return `
+            <div class="border rounded-xl p-4 bg-slate-50" data-review-id="${r.id}" data-product-id="${r.product_id || 'Unknown'}">
+                <div class="flex gap-4">
+                    <img src="${productImage}" class="w-16 h-16 object-cover rounded-lg" alt="${productName}" onerror="this.src=''">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold">${productName}</h4>
+                                <p class="text-sm text-slate-600">by ${userName} on ${reviewDate}</p>
                             </div>
-                            <div class="stat">
-                                <div class="label">Spent</div>
-                                <div class="value">FCFA ${totalSpent.toFixed(2)}</div>
-                            </div>
-                            <div class="stat">
-                                <div class="label">Joined</div>
-                                <div class="value">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="stars text-yellow-500">${stars}</span>
+                                <span class="text-sm text-slate-400">#${r.product_id || 'Unknown'}</span>
                             </div>
                         </div>
+                        <div class="mt-2 text-slate-700">${r.comment || 'No comment'}</div>
+                        <div class="mt-3 flex justify-end gap-2">
+                            <button class="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition" onclick="approveReview('${r.id}')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition" onclick="deleteReview('${r.id}')">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </div>
                     </div>
-                `;
-            }).join('');
-        }
-
-        // --- Update Pagination ---
+                </div>
+            </div>
+        `;
+    }).join('');
+}
         function updatePagination() {
-            const totalPages = Math.ceil(totalCustomers / perPage);
+            const totalPages = Math.ceil(totalReviews / perPage);
             document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages || 1}`;
             document.getElementById('prevBtn').disabled = currentPage <= 1;
             document.getElementById('nextBtn').disabled = currentPage >= totalPages;
         }
 
         function prevPage() {
-            if (currentPage > 1) loadCustomers(currentPage - 1);
+            if (currentPage > 1) loadReviews(currentPage - 1);
         }
 
         function nextPage() {
-            const totalPages = Math.ceil(totalCustomers / perPage);
-            if (currentPage < totalPages) loadCustomers(currentPage + 1);
+            const totalPages = Math.ceil(totalReviews / perPage);
+            if (currentPage < totalPages) loadReviews(currentPage + 1);
         }
 
-        function resetFilters() {
-            document.getElementById('searchInput').value = '';
-            loadCustomers(1);
+        // --- Approve Review ---
+        async function approveReview(id) {
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                const { error } = await client
+                    .from('reviews')
+                    .update({ approved: true })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showToast('✅ Review approved');
+                loadReviews(currentPage);
+
+            } catch (err) {
+                console.error('Error approving review:', err);
+                showToast('❌ Failed to approve review', 'error');
+            }
+        }
+
+        // --- Delete Review ---
+        async function deleteReview(id) {
+            if (!confirm('Delete this review?')) return;
+
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                const { error } = await client
+                    .from('reviews')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showToast('🗑️ Review deleted');
+                loadReviews(currentPage);
+
+            } catch (err) {
+                console.error('Error deleting review:', err);
+                showToast('❌ Failed to delete review', 'error');
+            }
         }
 
         // --- Init ---
         document.addEventListener('DOMContentLoaded', function() {
             if (checkAuth()) {
-                loadCustomers(1);
+                loadReviews(1);
                 document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
-                
-                document.getElementById('searchInput').addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') loadCustomers(1);
-                });
             }
         });
 
@@ -546,6 +596,6 @@
                 if (sidebar.classList.contains('open')) toggleSidebar();
             }
         });
-    </script>
+    </script><script src="push-client.js"></script>
 </body>
 </html>

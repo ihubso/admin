@@ -455,7 +455,7 @@
         function checkAuth() {
             const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
             if (!session || !session.loggedIn) {
-                window.location.href = 'admin-login.html';
+                window.location.href = 'index.html';
                 return false;
             }
             // Update admin info
@@ -474,7 +474,7 @@
         // --- Logout ---
         function logout() {
             localStorage.removeItem('admin_session');
-            window.location.href = 'admin-login.html';
+            window.location.href = 'index.html';
         }
 
         // --- Load Dashboard Data ---

@@ -206,7 +206,7 @@
     function checkAuth() {
         const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
         if (!session || !session.loggedIn) {
-            window.location.href = 'admin-login.html';
+            window.location.href = 'index.html';
             return false;
         }
         const name = session.user?.email?.split('@')[0] || 'Admin';
@@ -222,7 +222,7 @@
 
     function logout() {
         localStorage.removeItem('admin_session');
-        window.location.href = 'admin-login.html';
+        window.location.href = 'index.html';
     }
 
     function showToast(msg, type = 'success') {

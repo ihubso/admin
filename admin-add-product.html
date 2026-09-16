@@ -420,13 +420,13 @@
   // ----- auth -----
   function checkAuth() {
     const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
-    if (!session || !session.loggedIn) { window.location.href = 'admin-login.html'; return false; }
+    if (!session || !session.loggedIn) { window.location.href = 'index.html'; return false; }
     const name = session.user?.email?.split('@')[0] || 'Admin';
     document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
     document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
     return true;
   }
-  function logout() { localStorage.removeItem('admin_session'); window.location.href = 'admin-login.html'; }
+  function logout() { localStorage.removeItem('admin_session'); window.location.href = 'index.html'; }
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
     document.getElementById('sidebarOverlay').classList.toggle('active');

@@ -9,10 +9,10 @@ app.use(express.static(__dirname));
 
 // Route root URL to your showcase page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin-login.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
     console.log(`\n🚀 Server running at http://localhost:${PORT}`);
-    console.log(`📄 Serving admin-login.html\n`);
+    console.log(`📄 Serving index.html\n`);
 });

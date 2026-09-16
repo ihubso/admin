@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics · Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #0F172A;
+        }
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: #0F172A;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+        }
+        .sidebar .brand .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        .sidebar .brand .name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .sidebar .brand .name span { color: #8B6BE8; }
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .sidebar .nav-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+        .sidebar .nav-item.active {
+            background: rgba(108,60,225,0.2);
+            color: #8B6BE8;
+        }
+        .sidebar .nav-item i { width: 20px; font-size: 16px; }
+        .sidebar .nav-section {
+            padding: 12px 14px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sidebar .logout-btn {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 16px;
+        }
+        .sidebar .logout-btn .nav-item { color: rgba(255,255,255,0.4); }
+        .sidebar .logout-btn .nav-item:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+        .main-content {
+            margin-left: 260px;
+            padding: 24px 32px;
+            width: 100%;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .topbar h1 { font-size: 24px; font-weight: 800; }
+        .topbar .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar .admin-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6C3CE1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        /* Analytics Cards */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .analytics-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 20px;
+            border: 1px solid #f0f0f0;
+        }
+        .analytics-card .label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .analytics-card .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-top: 4px;
+        }
+        .analytics-card .change {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .analytics-card .change.positive { color: #10B981; }
+        .analytics-card .change.negative { color: #EF4444; }
+        
+        /* Chart Section */
+        .chart-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #f0f0f0;
+        }
+        .chart-card .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .chart-card .card-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .chart-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 160px;
+            padding-top: 12px;
+        }
+        .chart-bar .bar-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .chart-bar .bar-item .bar {
+            width: 100%;
+            max-width: 32px;
+            border-radius: 4px 4px 0 0;
+            background: #6C3CE1;
+            min-height: 4px;
+            transition: height 0.6s ease;
+        }
+        .chart-bar .bar-item .bar-label {
+            font-size: 10px;
+            color: #94A3B8;
+            font-weight: 500;
+        }
+        .chart-bar .bar-item .bar-value {
+            font-size: 10px;
+            font-weight: 600;
+            color: #0F172A;
+        }
+        
+        /* Top Products */
+        .top-products-list .product-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .top-products-list .product-item:last-child { border-bottom: none; }
+        .top-products-list .product-item .product-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-products-list .product-item .product-info .rank {
+            font-weight: 700;
+            font-size: 13px;
+            color: #94A3B8;
+            min-width: 24px;
+        }
+        .top-products-list .product-item .product-info .name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .top-products-list .product-item .product-sales {
+            font-size: 13px;
+            color: #475569;
+        }
+        
+        /* Advanced Analytics - New Design */
+        .advanced-analytics {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .advanced-stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #f0f0f0;
+            text-align: center;
+        }
+        .advanced-stat-card .stat-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .advanced-stat-card .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .advanced-stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-top: 4px;
+        }
+        
+        /* Two Column Layout for Lists */
+        .analytics-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .analytics-list-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #f0f0f0;
+        }
+        .analytics-list-card .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .analytics-list-card .card-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .analytics-list-card .card-header .badge {
+            font-size: 12px;
+            color: #94A3B8;
+            background: #f1f5f9;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        
+        /* Search Item */
+        .search-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .search-item:last-child { border-bottom: none; }
+        .search-item .search-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-item .search-info .rank {
+            font-weight: 700;
+            font-size: 13px;
+            color: #94A3B8;
+            min-width: 28px;
+        }
+        .search-item .search-info .query {
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .search-item .search-info .query .no-results {
+            color: #EF4444;
+            font-size: 11px;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+        .search-item .search-info .query .has-results {
+            color: #10B981;
+            font-size: 11px;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+        .search-item .search-count {
+            font-size: 13px;
+            color: #64748B;
+        }
+        
+        /* View Item */
+        .view-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .view-item:last-child { border-bottom: none; }
+        .view-item .view-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .view-item .view-info .rank {
+            font-weight: 700;
+            font-size: 13px;
+            color: #94A3B8;
+            min-width: 28px;
+        }
+        .view-item .view-info .product-name {
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .view-item .view-details {
+            text-align: right;
+        }
+        .view-item .view-details .view-count {
+            font-size: 13px;
+            font-weight: 600;
+            color: #0F172A;
+        }
+        .view-item .view-details .view-time {
+            font-size: 11px;
+            color: #94A3B8;
+            display: block;
+        }
+        
+        /* No Results Section */
+        .no-results-section {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            border: 1px solid #f0f0f0;
+            margin-bottom: 24px;
+        }
+        .no-results-section .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .no-results-section .card-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .no-results-section .card-header .badge {
+            font-size: 12px;
+            color: #94A3B8;
+            background: #f1f5f9;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        .no-result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .no-result-item:last-child { border-bottom: none; }
+        .no-result-item .query {
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .no-result-item .query i {
+            color: #EF4444;
+            margin-right: 6px;
+        }
+        .no-result-item .time {
+            font-size: 11px;
+            color: #94A3B8;
+        }
+        
+        /* Recent Search Activity */
+        .recent-search-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .recent-search-item:last-child { border-bottom: none; }
+        .recent-search-item .query {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .recent-search-item .query .no-results {
+            color: #EF4444;
+            font-size: 11px;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+        .recent-search-item .query .has-results {
+            color: #10B981;
+            font-size: 11px;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+        .recent-search-item .time {
+            font-size: 11px;
+            color: #94A3B8;
+        }
+        
+        /* Action Buttons */
+        .action-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .action-btn.danger {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+        .action-btn.danger:hover {
+            background: #DC2626;
+            color: white;
+        }
+        .action-btn.warning {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+        .action-btn.warning:hover {
+            background: #D97706;
+            color: white;
+        }
+        .action-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+        
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #0F172A;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            .mobile-toggle { display: block; }
+            .chart-section {
+                grid-template-columns: 1fr;
+            }
+            .advanced-analytics {
+                grid-template-columns: 1fr 1fr;
+            }
+            .analytics-two-col {
+                grid-template-columns: 1fr;
+            }
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .topbar h1 { font-size: 20px; }
+        }
+        @media (max-width: 480px) {
+            .advanced-analytics {
+                grid-template-columns: 1fr;
+            }
+            .analytics-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .analytics-card { padding: 12px 14px; }
+            .analytics-card .value { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="logo">ST</div>
+                <div class="name">Sucess<span>Tech</span></div>
+            </div>
+
+            <div class="nav-section">Main</div>
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="admin-analytics.html" class="nav-item active">
+                <i class="fas fa-chart-line"></i> Analytics
+            </a>
+            <a href="admin-orders.html" class="nav-item">
+                <i class="fas fa-shopping-bag"></i> Orders
+            </a>
+            <a href="admin-customers.html" class="nav-item">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a href="admin-reviews.html" class="nav-item">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+
+            <div class="nav-section">Products</div>
+            <a href="admin-add-product.html" class="nav-item">
+                <i class="fas fa-plus-circle"></i> Add Product
+            </a>
+            <a href="admin-products.html" class="nav-item">
+                <i class="fas fa-boxes"></i> Product List
+            </a>
+
+            <div class="nav-section">Settings</div>
+            <a href="admin-business-info.html" class="nav-item">
+                <i class="fas fa-store"></i> Business Info
+            </a>
+            <a href="admin-featured.html" class="nav-item">
+                <i class="fas fa-star"></i> Featured Product
+            </a>
+            <a href="admin-contact.html" class="nav-item">
+                <i class="fas fa-map-marker-alt"></i> Contact & Location
+            </a>
+                        <a href="admin-category-showcase.html" class="nav-item">
+                <i class="fas fa-layer-group"></i> Category Showcase
+            </a>
+
+            <div class="logout-btn">
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="mobile-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>📊 Analytics</h1>
+                </div>
+                <div class="admin-info">
+                    <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
+                    <div class="avatar" id="adminAvatar">A</div>
+                </div>
+            </div>
+
+            <!-- Advanced Analytics Stats -->
+            <div class="advanced-analytics" id="advancedStats">
+                <div class="advanced-stat-card">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-label">Total Searches</div>
+                    <div class="stat-value" id="totalSearches">0</div>
+                </div>
+                <div class="advanced-stat-card">
+                    <div class="stat-icon">👁️</div>
+                    <div class="stat-label">Product Views</div>
+                    <div class="stat-value" id="totalViews">0</div>
+                </div>
+                <div class="advanced-stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-label">Failed Searches</div>
+                    <div class="stat-value" id="failedSearches">0</div>
+                </div>
+            </div>
+
+            <!-- Two Column: Searched Products & Most Viewed -->
+            <div class="analytics-two-col">
+                <!-- Frequently Searched Products -->
+                <div class="analytics-list-card">
+                    <div class="card-header">
+                        <h3>🔍 Frequently Searched Products</h3>
+                        <span class="badge" id="searchBadge">0 searches</span>
+                    </div>
+                    <div id="searchAnalytics">
+                        <div style="text-align:center;padding:20px;color:#94A3B8;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Most Viewed Products -->
+                <div class="analytics-list-card">
+                    <div class="card-header">
+                        <h3>👁️ Most Viewed Products</h3>
+                        <span class="badge" id="viewBadge">0 views</span>
+                    </div>
+                    <div id="viewAnalytics">
+                        <div style="text-align:center;padding:20px;color:#94A3B8;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Searches with No Results -->
+            <div class="no-results-section" id="noResultsSection">
+                <div class="card-header">
+                    <h3>❌ Searches with No Results</h3>
+                    <span class="badge" id="noResultsBadge">0 failed</span>
+                </div>
+                <div id="noResultsList">
+                    <div style="text-align:center;padding:12px;color:#94A3B8;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Search Activity -->
+            <div class="chart-card" style="margin-bottom:24px;">
+                <div class="card-header">
+                    <h3>📈 Recent Search Activity</h3>
+                    <span style="font-size:12px;color:#94A3B8;">Last 10 searches</span>
+                </div>
+                <div id="recentSearches">
+                    <div style="text-align:center;padding:20px;color:#94A3B8;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales by Category -->
+            <div class="chart-card" style="margin-bottom:24px;">
+                <div class="card-header">
+                    <h3>📊 Sales by Category</h3>
+                </div>
+                <div id="categorySales">
+                    <div style="text-align:center;padding:20px;color:#94A3B8;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-bottom:24px;flex-wrap:wrap;">
+                <button class="action-btn danger" onclick="clearSearchData()">
+                    <i class="fas fa-trash-alt"></i> Clear Search Data
+                </button>
+                <button class="action-btn danger" onclick="clearViewData()">
+                    <i class="fas fa-trash-alt"></i> Clear View Data
+                </button>
+            </div>
+                        <!-- Revenue Stats -->
+            <div class="analytics-grid" id="analyticsStats">
+                <div class="analytics-card">
+                    <div class="label">Total Revenue</div>
+                    <div class="value" id="totalRevenue">FCFA 0</div>
+                    <div class="change positive" id="revenueChange">↑ 0%</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="label">Average Order Value</div>
+                    <div class="value" id="avgOrderValue">FCFA 0</div>
+                    <div class="change positive" id="avgChange">↑ 0%</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="label">Total Orders</div>
+                    <div class="value" id="totalOrders">0</div>
+                    <div class="change positive" id="ordersChange">↑ 0%</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="label">Conversion Rate</div>
+                    <div class="value" id="conversionRate">0%</div>
+                    <div class="change" id="conversionChange">0%</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-section">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>📈 Monthly Revenue</h3>
+                        <span style="font-size:12px;color:#94A3B8;">Last 6 months</span>
+                    </div>
+                    <div class="chart-bar" id="revenueChart">
+                        <!-- Bars will be rendered by JS -->
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>🏆 Top Products</h3>
+                    </div>
+                    <div class="top-products-list" id="topProducts">
+                        <div style="text-align:center;padding:20px;color:#94A3B8;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ADMIN ANALYTICS
+        // ============================================================
+
+        const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+        let supabaseClient = null;
+        let allOrders = [];
+        let allProducts = [];
+
+        function getSupabase() {
+            if (supabaseClient) return supabaseClient;
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return supabaseClient;
+            }
+            return null;
+        }
+
+        function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
+            if (!session || !session.loggedIn) {
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            const name = session.user?.email?.split('@')[0] || 'Admin';
+            document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+            document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+            return true;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_session');
+            window.location.href = 'admin-login.html';
+        }
+
+        function timeAgo(date) {
+            const now = new Date();
+            const diff = now - new Date(date);
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            if (days > 0) return `${days}d ago`;
+            if (hours > 0) return `${hours}h ago`;
+            if (minutes > 0) return `${minutes}m ago`;
+            return 'Just now';
+        }
+
+        // --- Load All Analytics ---
+        async function loadAnalytics() {
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                // Get all orders
+                const { data: orders, error: ordersError } = await client
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (ordersError) throw ordersError;
+                allOrders = orders || [];
+
+                // Get all products
+                const { data: products, error: productsError } = await client
+                    .from('products')
+                    .select('id, name, price, category, image');
+
+                if (productsError) throw productsError;
+                allProducts = products || [];
+
+                // Calculate revenue metrics
+                calculateRevenueMetrics(allOrders);
+
+                // Render revenue chart
+                renderRevenueChart(allOrders);
+
+                // Render top products
+                renderTopProducts(allProducts, allOrders);
+
+                // Render category sales
+                renderCategorySales(allOrders);
+
+                // Load search analytics
+                await loadSearchAnalytics(client);
+
+                // Load view analytics
+                await loadViewAnalytics(client);
+
+                // Load no results searches
+                await loadNoResultsSearches(client);
+
+                // Load recent searches
+                await loadRecentSearches(client);
+
+            } catch (err) {
+                console.error('Error loading analytics:', err);
+            }
+        }
+
+        // --- Calculate Revenue Metrics ---
+        function calculateRevenueMetrics(orders) {
+            const deliveredOrders = orders?.filter(o => o.status === 'delivered') || [];
+            const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+            const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
+
+            document.getElementById('totalRevenue').textContent = `FCFA ${totalRevenue.toFixed(2)}`;
+            document.getElementById('avgOrderValue').textContent = `FCFA ${avgOrderValue.toFixed(2)}`;
+            document.getElementById('totalOrders').textContent = orders?.length || 0;
+            
+            const conversionRate = orders?.length > 0 ? (deliveredOrders.length / orders.length * 100) : 0;
+            document.getElementById('conversionRate').textContent = `${conversionRate.toFixed(1)}%`;
+        }
+
+        // --- Render Revenue Chart ---
+        function renderRevenueChart(orders) {
+            const container = document.getElementById('revenueChart');
+
+            const months = [];
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({
+                    label: date.toLocaleString('default', { month: 'short' }),
+                    month: date.getMonth(),
+                    year: date.getFullYear(),
+                    revenue: 0
+                });
+            }
+
+            if (orders) {
+                orders.forEach(order => {
+                    if (order.status === 'delivered' && order.created_at) {
+                        const date = new Date(order.created_at);
+                        const monthIndex = months.findIndex(m => 
+                            m.month === date.getMonth() && m.year === date.getFullYear()
+                        );
+                        if (monthIndex !== -1) {
+                            months[monthIndex].revenue += (parseFloat(order.total) || 0);
+                        }
+                    }
+                });
+            }
+
+            const maxRevenue = Math.max(...months.map(m => m.revenue), 1);
+
+            container.innerHTML = months.map(m => {
+                const height = (m.revenue / maxRevenue) * 100;
+                return `
+                    <div class="bar-item">
+                        <div class="bar-value">FCFA ${(m.revenue / 1000).toFixed(1)}K</div>
+                        <div class="bar" style="height:${Math.max(height, 4)}%;background:linear-gradient(180deg,#6C3CE1,#8B6BE8);"></div>
+                        <div class="bar-label">${m.label}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Render Top Products ---
+        function renderTopProducts(products, orders) {
+            const container = document.getElementById('topProducts');
+
+            if (!products || products.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px;color:#94A3B8;">
+                        <i class="fas fa-box-open" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                        No products yet
+                    </div>
+                `;
+                return;
+            }
+
+            const salesCount = {};
+            if (orders) {
+                orders.forEach(order => {
+                    if (order.items) {
+                        try {
+                            const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+                            items.forEach(item => {
+                                const id = item.id || item.product_id;
+                                if (id) {
+                                    salesCount[id] = (salesCount[id] || 0) + (item.qty || 1);
+                                }
+                            });
+                        } catch (e) {}
+                    }
+                });
+            }
+
+            const sortedProducts = products
+                .map(p => ({
+                    ...p,
+                    sales: salesCount[p.id] || 0
+                }))
+                .sort((a, b) => b.sales - a.sales)
+                .slice(0, 10);
+
+            if (sortedProducts.every(p => p.sales === 0)) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px;color:#94A3B8;">
+                        <i class="fas fa-shopping-cart" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                        No sales data yet
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sortedProducts.map((p, index) => `
+                <div class="product-item">
+                    <div class="product-info">
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name">${p.name || 'Product'}</span>
+                    </div>
+                    <div class="product-sales">${p.sales} sold</div>
+                </div>
+            `).join('');
+        }
+
+        // --- Render Category Sales ---
+        function renderCategorySales(orders) {
+            const container = document.getElementById('categorySales');
+
+            const categoryCount = {};
+            if (orders) {
+                orders.forEach(order => {
+                    if (order.items && order.status === 'delivered') {
+                        try {
+                            const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+                            items.forEach(item => {
+                                const cat = item.category || 'Uncategorized';
+                                categoryCount[cat] = (categoryCount[cat] || 0) + (item.qty || 1);
+                            });
+                        } catch (e) {}
+                    }
+                });
+            }
+
+            const categories = Object.entries(categoryCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (categories.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px;color:#94A3B8;">
+                        <i class="fas fa-chart-simple" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                        No category data yet
+                    </div>
+                `;
+                return;
+            }
+
+            const maxCount = Math.max(...categories.map(c => c[1]), 1);
+
+            container.innerHTML = categories.map(([name, count]) => `
+                <div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+                    <span style="font-weight:600;font-size:13px;min-width:120px;">${name}</span>
+                    <div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;">
+                        <div style="width:${(count / maxCount * 100)}%;height:100%;background:linear-gradient(90deg,#6C3CE1,#8B6BE8);border-radius:4px;transition:width 0.6s ease;"></div>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;color:#0F172A;min-width:60px;text-align:right;">${count}</span>
+                </div>
+            `).join('');
+        }
+
+        // --- Load Search Analytics ---
+        async function loadSearchAnalytics(client) {
+            const container = document.getElementById('searchAnalytics');
+
+            try {
+                const { data, error } = await client
+                    .from('search_analytics')
+                    .select('*')
+                    .order('count', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                const totalSearches = data?.reduce((sum, s) => sum + s.count, 0) || 0;
+                document.getElementById('totalSearches').textContent = totalSearches;
+                document.getElementById('searchBadge').textContent = `${totalSearches} searches`;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:20px;color:#94A3B8;">
+                            <i class="fas fa-search" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                            No search data yet
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map((item, index) => {
+                    const isNoResult = item.results === 0;
+                    return `
+                        <div class="search-item">
+                            <div class="search-info">
+                                <span class="rank">#${index + 1}</span>
+                                <span class="query">
+                                    "${item.query}"
+                                    ${isNoResult ? '<span class="no-results">(0 results)</span>' : ''}
+                                </span>
+                            </div>
+                            <div class="search-count">${item.count} searches</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Error loading search analytics:', err);
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px;color:#EF4444;">
+                        Failed to load search data
+                    </div>
+                `;
+            }
+        }
+
+        // --- Load View Analytics ---
+// --- Load View Analytics ---
+async function loadViewAnalytics(client) {
+    const container = document.getElementById('viewAnalytics');
+
+    try {
+        const { data, error } = await client
+            .from('view_analytics')
+            .select('*')
+            .order('count', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        const totalViews = data?.reduce((sum, v) => sum + v.count, 0) || 0;
+        document.getElementById('totalViews').textContent = totalViews;
+        document.getElementById('viewBadge').textContent = `${totalViews} views`;
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center;padding:20px;color:#94A3B8;">
+                    <i class="fas fa-eye" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                    No view data yet
+                </div>
+            `;
+            return;
+        }
+
+        // Get product names and images
+        const productIds = data.map(v => v.product_id).filter(id => id);
+        let productMap = {};
+        if (productIds.length > 0) {
+            const { data: products, error: productError } = await client
+                .from('products')
+                .select('id, name, image')
+                .in('id', productIds);
+
+            if (!productError && products) {
+                productMap = {};
+                products.forEach(p => {
+                    productMap[p.id] = { name: p.name, image: p.image };
+                });
+            }
+        }
+
+        container.innerHTML = data.map((item, index) => {
+            const productInfo = productMap[item.product_id];
+            const productName = productInfo ? productInfo.name : 'Deleted Product';
+            const productImage = productInfo ? productInfo.image : '';
+            return `
+                <div class="view-item">
+                    <div class="view-info">
+                        <img src="${productImage}" class="w-8 h-8 object-cover rounded-full mr-2" alt="${productName}" onerror="this.style.display='none'">
+                        <span class="rank">#${index + 1}</span>
+                        <span class="product-name">${productName}</span>
+                    </div>
+                    <div class="view-details">
+                        <span class="view-count">${item.count} views</span>
+                        <span class="view-time">${timeAgo(item.last_viewed)}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        console.error('Error loading view analytics:', err);
+        container.innerHTML = `
+            <div style="text-align:center;padding:20px;color:#EF4444;">
+                Failed to load view data
+            </div>
+        `;
+    }
+}
+        // --- Load No Results Searches ---
+        async function loadNoResultsSearches(client) {
+            const container = document.getElementById('noResultsList');
+
+            try {
+                const { data, error } = await client
+                    .from('search_analytics')
+                    .select('*')
+                    .eq('results', 0)
+                    .order('count', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                const failedCount = data?.length || 0;
+                document.getElementById('failedSearches').textContent = failedCount;
+                document.getElementById('noResultsBadge').textContent = `${failedCount} failed`;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:12px;color:#10B981;">
+                            <i class="fas fa-check-circle" style="font-size:18px;display:block;margin-bottom:4px;"></i>
+                            No failed searches 🎉
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map((item) => `
+                    <div class="no-result-item">
+                        <div class="query">
+                            <i class="fas fa-times-circle"></i> "${item.query}"
+                        </div>
+                        <div class="time">${timeAgo(item.last_searched)}</div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error('Error loading no results searches:', err);
+                container.innerHTML = `
+                    <div style="text-align:center;padding:12px;color:#EF4444;">
+                        Failed to load data
+                    </div>
+                `;
+            }
+        }
+
+        // --- Load Recent Searches ---
+        async function loadRecentSearches(client) {
+            const container = document.getElementById('recentSearches');
+
+            try {
+                const { data, error } = await client
+                    .from('search_analytics')
+                    .select('*')
+                    .order('last_searched', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:20px;color:#94A3B8;">
+                            <i class="fas fa-history" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                            No recent searches
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map(item => {
+                    const isNoResult = item.results === 0;
+                    return `
+                        <div class="recent-search-item">
+                            <div class="query">
+                                🔍 "${item.query}"
+                                ${isNoResult ? '<span class="no-results">(0 results)</span>' : `<span class="has-results">(${item.results} results)</span>`}
+                            </div>
+                            <div class="time">${timeAgo(item.last_searched)}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Error loading recent searches:', err);
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px;color:#EF4444;">
+                        Failed to load recent searches
+                    </div>
+                `;
+            }
+        }
+
+        // --- Clear Search Data ---
+        async function clearSearchData() {
+            if (!confirm('Delete all search analytics data?')) return;
+
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                const { error } = await client
+                    .from('search_analytics')
+                    .delete()
+                    .neq('query', 'placeholder');
+
+                if (error) throw error;
+
+                alert('✅ Search data cleared successfully');
+                await loadSearchAnalytics(client);
+                await loadNoResultsSearches(client);
+                await loadRecentSearches(client);
+
+            } catch (err) {
+                console.error('Error clearing search data:', err);
+                alert('❌ Failed to clear search data');
+            }
+        }
+
+        // --- Clear View Data ---
+        async function clearViewData() {
+            if (!confirm('Delete all view analytics data?')) return;
+
+            const client = getSupabase();
+            if (!client) return;
+
+            try {
+                const { error } = await client
+                    .from('view_analytics')
+                    .delete()
+                    .neq('product_id', 'placeholder');
+
+                if (error) throw error;
+
+                alert('✅ View data cleared successfully');
+                await loadViewAnalytics(client);
+
+            } catch (err) {
+                console.error('Error clearing view data:', err);
+                alert('❌ Failed to clear view data');
+            }
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                loadAnalytics();
+                setInterval(loadAnalytics, 30000);
+                document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) toggleSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

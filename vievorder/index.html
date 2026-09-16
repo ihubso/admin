@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Details · Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #0F172A;
+        }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: #0F172A;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+        }
+        .sidebar .brand .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        .sidebar .brand .name { font-weight: 700; font-size: 16px; }
+        .sidebar .brand .name span { color: #8B6BE8; }
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar .nav-item.active { background: rgba(108,60,225,0.2); color: #8B6BE8; }
+        .sidebar .nav-item i { width: 20px; font-size: 16px; }
+        .sidebar .nav-section {
+            padding: 12px 14px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sidebar .logout-btn {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 16px;
+        }
+        .sidebar .logout-btn .nav-item { color: rgba(255,255,255,0.4); }
+        .sidebar .logout-btn .nav-item:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+        .main-content {
+            margin-left: 260px;
+            padding: 24px 32px;
+            width: 100%;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .topbar h1 { font-size: 24px; font-weight: 800; }
+        .topbar .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar .admin-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6C3CE1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .order-detail-container {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid #f0f0f0;
+            max-width: 900px;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #E2E8F0;
+            margin-bottom: 20px;
+        }
+        .order-header .order-id {
+            font-size: 20px;
+            font-weight: 800;
+        }
+        .order-header .order-status {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 16px;
+            border-radius: 20px;
+            text-transform: capitalize;
+        }
+        .order-status.pending { background: #FEF3C7; color: #D97706; }
+        .order-status.confirmed { background: #D1FAE5; color: #059669; }
+        .order-status.processing { background: #DBEAFE; color: #2563EB; }
+        .order-status.shipped { background: #DBEAFE; color: #2563EB; }
+        .order-status.delivered { background: #D1FAE5; color: #059669; }
+        .order-status.cancelled { background: #FEE2E2; color: #DC2626; }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .info-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid #f1f5f9;
+        }
+        .info-card .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-card .value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-top: 4px;
+        }
+        .info-card .value a { color: #6C3CE1; text-decoration: none; }
+        .info-card .value a:hover { text-decoration: underline; }
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .items-table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #E2E8F0;
+            background: #f8fafc;
+        }
+        .items-table td {
+            padding: 10px 12px;
+            font-size: 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .items-table .item-name { font-weight: 600; }
+        .items-table .item-variant { font-size: 12px; color: #94A3B8; }
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 16px;
+            margin-top: 16px;
+            border-top: 2px solid #E2E8F0;
+        }
+        .total-row .total-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #475569;
+        }
+        .total-row .total-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #6C3CE1;
+            margin-left: 24px;
+        }
+        .order-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-status {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .btn-status:hover { transform: translateY(-2px); }
+        .btn-status.pending { background: #FEF3C7; color: #D97706; }
+        .btn-status.confirmed { background: #D1FAE5; color: #059669; }
+        .btn-status.processing { background: #DBEAFE; color: #2563EB; }
+        .btn-status.shipped { background: #DBEAFE; color: #2563EB; }
+        .btn-status.delivered { background: #D1FAE5; color: #059669; }
+        .btn-status.cancelled { background: #FEE2E2; color: #DC2626; }
+        .btn-back {
+            padding: 8px 20px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-back:hover { background: #f8fafc; border-color: #94A3B8; }
+        .btn-notify {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #6C3CE1;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .btn-notify:hover { background: #5A2FC4; transform: translateY(-2px); }
+        .btn-notify:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 90%;
+            text-align: center;
+            animation: toastUp 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+        .toast-msg.success { background: #10B981; }
+        .toast-msg.error { background: #EF4444; }
+        .toast-msg.info { background: #3B82F6; }
+        .toast-msg.warning { background: #F59E0B; }
+        @keyframes toastUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        .toast-msg.hide {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #0F172A;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #E2E8F0;
+            border-top-color: #6C3CE1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 16px; }
+            .mobile-toggle { display: block; }
+            .topbar h1 { font-size: 20px; }
+            .order-detail-container { padding: 20px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .order-header { flex-direction: column; }
+            .items-table { font-size: 13px; display: block; overflow-x: auto; }
+            .order-actions { flex-direction: column; }
+            .order-actions .btn-status, .order-actions .btn-back, .order-actions .btn-notify { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="logo">ST</div>
+                <div class="name">Sucess<span>Tech</span></div>
+            </div>
+
+            <div class="nav-section">Main</div>
+            <a href="/admin-dashboard.html" class="nav-item">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="/admin-analytics.html" class="nav-item">
+                <i class="fas fa-chart-line"></i> Analytics
+            </a>
+            <a href="/admin-orders.html" class="nav-item active">
+                <i class="fas fa-shopping-bag"></i> Orders
+            </a>
+            <a href="/admin-customers.html" class="nav-item">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a href="/admin-reviews.html" class="nav-item">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+
+            <div class="nav-section">Products</div>
+            <a href="/admin-add-product.html" class="nav-item">
+                <i class="fas fa-plus-circle"></i> Add Product
+            </a>
+            <a href="/admin-products.html" class="nav-item">
+                <i class="fas fa-boxes"></i> Product List
+            </a>
+
+            <div class="nav-section">Settings</div>
+            <a href="/admin-business-info.html" class="nav-item">
+                <i class="fas fa-store"></i> Business Info
+            </a>
+            <a href="/admin-featured.html" class="nav-item">
+                <i class="fas fa-star"></i> Featured Product
+            </a>
+            <a href="/admin-contact.html" class="nav-item">
+                <i class="fas fa-map-marker-alt"></i> Contact & Location
+            </a>
+
+            <div class="logout-btn">
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="mobile-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>📋 Order Details</h1>
+                </div>
+                <div class="admin-info">
+                    <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
+                    <div class="avatar" id="adminAvatar">A</div>
+                </div>
+            </div>
+
+            <!-- Order Detail -->
+            <div class="order-detail-container">
+                <div id="loadingState" style="text-align:center;padding:40px;color:#94A3B8;">
+                    <div class="loading-spinner"></div>
+                    <span style="display:block;margin-top:12px;">Loading order details...</span>
+                </div>
+
+                <div id="orderContent" style="display:none;">
+                    <!-- Order Header -->
+                    <div class="order-header">
+                        <div>
+                            <div class="order-id" id="orderIdDisplay">#ORD-XXXXX</div>
+                            <div style="font-size:13px;color:#94A3B8;margin-top:2px;" id="orderDateDisplay">Placed on N/A</div>
+                        </div>
+                        <span class="order-status" id="orderStatusDisplay">Pending</span>
+                    </div>
+
+                    <!-- Customer & Shipping Info -->
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="label">👤 Customer</div>
+                            <div class="value" id="customerName">N/A</div>
+                            <div style="font-size:13px;color:#64748B;margin-top:2px;" id="customerEmail">N/A</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">📞 Contact</div>
+                            <div class="value" id="customerPhone">N/A</div>
+                            <div style="font-size:13px;color:#64748B;margin-top:2px;" id="customerAddress">N/A</div>
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <h3 style="font-weight:700;font-size:16px;margin-bottom:8px;">📦 Order Items</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Variant</th>
+                                    <th>Qty</th>
+                                    <th style="text-align:right;">Price</th>
+                                    <th style="text-align:right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderItemsBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Order Total -->
+                    <div class="total-row">
+                        <span class="total-label">Order Total</span>
+                        <span class="total-value" id="orderTotalDisplay">FCFA 0.00</span>
+                    </div>
+
+                    <!-- Order Notes -->
+                    <div id="orderNotesSection" style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9;display:none;">
+                        <div class="label" style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px;">📝 Notes</div>
+                        <div style="font-size:14px;color:#475569;margin-top:4px;" id="orderNotesDisplay"></div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="order-actions">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn-status pending" onclick="updateStatus('pending')">Pending</button>
+                            <button class="btn-status confirmed" onclick="updateStatus('confirmed')">Confirmed</button>
+                            <button class="btn-status processing" onclick="updateStatus('processing')">Processing</button>
+                            <button class="btn-status shipped" onclick="updateStatus('shipped')">Shipped</button>
+                            <button class="btn-status delivered" onclick="updateStatus('delivered')">Delivered</button>
+                            <button class="btn-status cancelled" onclick="updateStatus('cancelled')">Cancelled</button>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn-notify" id="notifyBtn" onclick="notifyCustomer()">
+                                <i class="fas fa-bell"></i> Notify Customer
+                            </button>
+                            <a href="/admin-orders.html" class="btn-back">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ADMIN ORDER VIEW with PUSH NOTIFICATIONS
+        // ============================================================
+
+        const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+        let supabaseClient = null;
+        let orderId = null;
+        let orderData = null;
+
+        function getSupabase() {
+            if (supabaseClient) return supabaseClient;
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return supabaseClient;
+            }
+            return null;
+        }
+
+        function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
+            if (!session || !session.loggedIn) {
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            const name = session.user?.email?.split('@')[0] || 'Admin';
+            document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+            document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+            return true;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_session');
+            window.location.href = 'admin-login.html';
+        }
+
+        function showToast(msg, type = 'success') {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Get Order ID from URL ---
+        function getOrderId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('order');
+        }
+
+        // --- Load Order ---
+        async function loadOrder() {
+            orderId = getOrderId();
+            if (!orderId) {
+                document.getElementById('loadingState').innerHTML = `
+                    <i class="fas fa-exclamation-circle" style="font-size:24px;color:#EF4444;display:block;margin-bottom:8px;"></i>
+                    No order ID specified
+                    <div style="margin-top:12px;">
+                        <a href="/admin-orders.html" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const client = getSupabase();
+            if (!client) {
+                document.getElementById('loadingState').innerHTML = `
+                    <i class="fas fa-database" style="font-size:24px;color:#EF4444;display:block;margin-bottom:8px;"></i>
+                    Database connection failed
+                `;
+                return;
+            }
+
+            try {
+                const { data, error } = await client
+                    .from('orders')
+                    .select('*')
+                    .eq('id', orderId)
+                    .single();
+
+                if (error) throw error;
+
+                if (!data) {
+                    document.getElementById('loadingState').innerHTML = `
+                        <i class="fas fa-box-open" style="font-size:24px;color:#F59E0B;display:block;margin-bottom:8px;"></i>
+                        Order not found
+                        <div style="margin-top:12px;">
+                            <a href="/admin-orders.html" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                orderData = data;
+                renderOrder(data);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('orderContent').style.display = 'block';
+
+            } catch (err) {
+                console.error('Error loading order:', err);
+                document.getElementById('loadingState').innerHTML = `
+                    <i class="fas fa-exclamation-circle" style="font-size:24px;color:#EF4444;display:block;margin-bottom:8px;"></i>
+                    Failed to load order: ${err.message}
+                    <div style="margin-top:12px;">
+                        <a href="/admin-orders.html" class="btn-back" style="display:inline-block;text-decoration:none;">Go Back</a>
+                    </div>
+                `;
+            }
+        }
+
+        // --- Render Order ---
+        function renderOrder(order) {
+            // Parse items
+            let items = [];
+            try {
+                items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
+            } catch (e) {
+                items = [];
+            }
+
+            // Header
+            document.getElementById('orderIdDisplay').textContent = `#${order.id}`;
+            const date = order.created_at ? new Date(order.created_at).toLocaleString() : 'N/A';
+            document.getElementById('orderDateDisplay').textContent = `Placed on ${date}`;
+            
+            const statusClass = order.status || 'pending';
+            const statusLabel = order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending';
+            const statusEl = document.getElementById('orderStatusDisplay');
+            statusEl.textContent = statusLabel;
+            statusEl.className = `order-status ${statusClass}`;
+
+            // Customer Info
+            document.getElementById('customerName').textContent = order.customer_name || 'N/A';
+            document.getElementById('customerEmail').textContent = order.email || 'No email';
+            document.getElementById('customerPhone').textContent = order.phone || 'No phone';
+            document.getElementById('customerAddress').textContent = order.address || 'No address';
+
+            // Order Items
+            const itemsBody = document.getElementById('orderItemsBody');
+            if (items && items.length > 0) {
+                itemsBody.innerHTML = items.map(item => {
+                    const total = (item.price || 0) * (item.qty || 1);
+                    const variantText = item.variants && Object.keys(item.variants).length > 0 ?
+                        Object.entries(item.variants).map(([k, v]) => `${k}: ${v}`).join(', ') :
+                        '-';
+                    return `
+                        <tr>
+                            <td class="item-name">${item.name || 'Unknown Product'}</td>
+                            <td class="item-variant">${variantText}</td>
+                            <td>${item.qty || 1}</td>
+                            <td style="text-align:right;">FCFA ${(item.price || 0).toFixed(2)}</td>
+                            <td style="text-align:right;font-weight:600;">FCFA ${total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                itemsBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:20px;color:#94A3B8;">No items in this order</td>
+                    </tr>
+                `;
+            }
+
+            // Total
+            document.getElementById('orderTotalDisplay').textContent = `FCFA ${(order.total || 0).toFixed(2)}`;
+
+            // Notes
+            if (order.notes) {
+                document.getElementById('orderNotesSection').style.display = 'block';
+                document.getElementById('orderNotesDisplay').textContent = order.notes;
+            } else {
+                document.getElementById('orderNotesSection').style.display = 'none';
+            }
+
+            // Update page title
+            document.title = `Order ${order.id} · Admin`;
+
+            // Store current status for reference
+            window._currentStatus = order.status;
+            window._customerId = order.customer_id || null;
+        }
+
+        // --- Update Order Status ---
+        async function updateStatus(newStatus) {
+            if (!orderId || !orderData) return;
+            if (newStatus === window._currentStatus) {
+                showToast(`Order is already ${newStatus}`, 'info');
+                return;
+            }
+
+            if (!confirm(`Change order status to "${newStatus}"?`)) return;
+
+            const client = getSupabase();
+            if (!client) return;
+
+            const btn = document.getElementById('notifyBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+            try {
+                const { error } = await client
+                    .from('orders')
+                    .update({ status: newStatus })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                showToast(`✅ Order status updated to ${newStatus}`);
+                
+                // Update UI
+                orderData.status = newStatus;
+                window._currentStatus = newStatus;
+                renderOrder(orderData);
+
+                // Send push notification if customer has an ID
+                if (orderData.customer_id) {
+                    try {
+                        await sendOrderPushNotification(orderId, newStatus, orderData.customer_id);
+                    } catch (notifError) {
+                        console.warn('Push notification failed:', notifError);
+                    }
+                }
+
+            } catch (err) {
+                console.error('Error updating status:', err);
+                showToast('❌ Failed to update status: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-bell"></i> Notify Customer';
+            }
+        }
+
+        // --- Send Order Push Notification ---
+        async function sendOrderPushNotification(orderId, status, customerId = null) {
+            try {
+                const supabaseUrl = 'https://bulprhgwuwatzobiojwz.supabase.co';
+                const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+                // Find the order
+                const order = orderData;
+                if (!order) {
+                    console.warn('⚠️ Order not found:', orderId);
+                    return false;
+                }
+
+                // Determine customer ID
+                let targetUserId = customerId;
+                if (!targetUserId) {
+                    // Use guest identifier
+                    targetUserId = 'user_guest_' + (order.phone || '').replace(/\D/g, '');
+                }
+
+                // Prepare notification message based on status
+                const statusMessages = {
+                    confirmed: {
+                        title: '✅ Order Confirmed!',
+                        body: `Your order #${orderId} has been confirmed. We'll notify you when it's being processed.`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    processing: {
+                        title: '🔄 Order Being Processed!',
+                        body: `Your order #${orderId} is now being processed. We'll ship it soon!`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    shipped: {
+                        title: '📦 Order Shipped!',
+                        body: `Your order #${orderId} has been shipped. Track your delivery soon!`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    delivered: {
+                        title: '✅ Order Delivered!',
+                        body: `Your order #${orderId} has been delivered. Thank you for shopping with us!`,
+                        url: `/orders/?order=${orderId}`
+                    },
+                    cancelled: {
+                        title: '❌ Order Cancelled',
+                        body: `Your order #${orderId} has been cancelled. If you have questions, please contact us.`,
+                        url: `/orders/?order=${orderId}`
+                    }
+                };
+
+                const message = statusMessages[status];
+                if (!message) {
+                    console.warn('⚠️ Unknown status:', status);
+                    return false;
+                }
+
+                // Send notification via Supabase Edge Function
+                const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseAnonKey}`
+                    },
+                    body: JSON.stringify({
+                        targetUserId: targetUserId,
+                        title: message.title,
+                        body: message.body,
+                        data: {
+                            url: `/orders/?order=${orderId}`,
+                            orderId: orderId,
+                            status: status
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+                    }
+                    
+                    if (errorData.error && errorData.error.includes('No active push subscription')) {
+                        console.log('ℹ️ User has no push subscription');
+                        return false;
+                    }
+                    
+                    console.error('❌ Server error:', errorData);
+                    return false;
+                }
+
+                const result = await response.json();
+                console.log(`📤 Order notification sent for #${orderId}:`, result);
+                return true;
+
+            } catch (error) {
+                console.error('❌ Error sending order notification:', error);
+                return false;
+            }
+        }
+
+        // --- Notify Customer (manual button) ---
+        async function notifyCustomer() {
+            if (!orderData) return;
+
+            const btn = document.getElementById('notifyBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+            try {
+                const status = orderData.status || 'pending';
+                const customerId = orderData.customer_id;
+
+                if (!customerId) {
+                    showToast('⚠️ No customer ID found for this order', 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-bell"></i> Notify Customer';
+                    return;
+                }
+
+                const result = await sendOrderPushNotification(orderId, status, customerId);
+                
+                if (result) {
+                    showToast('✅ Notification sent to customer');
+                } else {
+                    showToast('⚠️ No active push subscription for this customer', 'warning');
+                }
+
+            } catch (err) {
+                console.error('Error sending notification:', err);
+                showToast('❌ Failed to send notification', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-bell"></i> Notify Customer';
+            }
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                loadOrder();
+                document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) toggleSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

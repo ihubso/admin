@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customers · Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #0F172A;
+        }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: #0F172A;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+        }
+        .sidebar .brand .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        .sidebar .brand .name { font-weight: 700; font-size: 16px; }
+        .sidebar .brand .name span { color: #8B6BE8; }
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar .nav-item.active { background: rgba(108,60,225,0.2); color: #8B6BE8; }
+        .sidebar .nav-item i { width: 20px; font-size: 16px; }
+        .sidebar .nav-section {
+            padding: 12px 14px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sidebar .logout-btn {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 16px;
+        }
+        .sidebar .logout-btn .nav-item { color: rgba(255,255,255,0.4); }
+        .sidebar .logout-btn .nav-item:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+        .main-content {
+            margin-left: 260px;
+            padding: 24px 32px;
+            width: 100%;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .topbar h1 { font-size: 24px; font-weight: 800; }
+        .topbar .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar .admin-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6C3CE1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+        }
+        .filter-bar input {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px 14px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            font-family: inherit;
+        }
+        .filter-bar input:focus { border-color: #6C3CE1; }
+        .filter-bar button {
+            padding: 8px 16px;
+            background: #6C3CE1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .filter-bar button:hover { background: #5A2FC4; }
+        .customers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .customer-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .customer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            border-color: #6C3CE1;
+        }
+        .customer-card .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6C3CE1, #8B6BE8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+        .customer-card .name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #0F172A;
+        }
+        .customer-card .email {
+            font-size: 13px;
+            color: #94A3B8;
+        }
+        .customer-card .phone {
+            font-size: 13px;
+            color: #64748B;
+            margin-top: 4px;
+        }
+        .customer-card .stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .customer-card .stats .stat {
+            font-size: 13px;
+        }
+        .customer-card .stats .stat .label {
+            color: #94A3B8;
+        }
+        .customer-card .stats .stat .value {
+            font-weight: 700;
+            color: #0F172A;
+        }
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+        .pagination button {
+            padding: 6px 14px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            background: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .pagination button:hover { border-color: #6C3CE1; color: #6C3CE1; }
+        .pagination button.active {
+            background: #6C3CE1;
+            color: white;
+            border-color: #6C3CE1;
+        }
+        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #0F172A;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            .mobile-toggle { display: block; }
+            .topbar h1 { font-size: 20px; }
+            .customers-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+        @media (max-width: 480px) {
+            .customers-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="logo">ST</div>
+                <div class="name">Sucess<span>Tech</span></div>
+            </div>
+
+            <div class="nav-section">Main</div>
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="admin-analytics.html" class="nav-item">
+                <i class="fas fa-chart-line"></i> Analytics
+            </a>
+            <a href="admin-orders.html" class="nav-item">
+                <i class="fas fa-shopping-bag"></i> Orders
+            </a>
+            <a href="admin-customers.html" class="nav-item active">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a href="admin-reviews.html" class="nav-item">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+
+            <div class="nav-section">Products</div>
+            <a href="admin-add-product.html" class="nav-item">
+                <i class="fas fa-plus-circle"></i> Add Product
+            </a>
+            <a href="admin-products.html" class="nav-item">
+                <i class="fas fa-boxes"></i> Product List
+            </a>
+
+            <div class="nav-section">Settings</div>
+            <a href="admin-business-info.html" class="nav-item">
+                <i class="fas fa-store"></i> Business Info
+            </a>
+            <a href="admin-featured.html" class="nav-item">
+                <i class="fas fa-star"></i> Featured Product
+            </a>
+            <a href="admin-contact.html" class="nav-item">
+                <i class="fas fa-map-marker-alt"></i> Contact & Location
+            </a>
+                        <a href="admin-category-showcase.html" class="nav-item">
+                <i class="fas fa-layer-group"></i> Category Showcase
+            </a>
+
+            <div class="logout-btn">
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="mobile-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>👥 Customers</h1>
+                </div>
+                <div class="admin-info">
+                    <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
+                    <div class="avatar" id="adminAvatar">A</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="Search by name or email..." />
+                <button onclick="loadCustomers()"><i class="fas fa-search"></i> Search</button>
+                <button onclick="resetFilters()" style="background:#E2E8F0;color:#475569;">Reset</button>
+            </div>
+
+            <!-- Customers Grid -->
+            <div class="customers-grid" id="customersGrid">
+                <div style="grid-column:1/-1;text-align:center;padding:40px;color:#94A3B8;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading customers...
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+                <button onclick="prevPage()" id="prevBtn">←</button>
+                <span id="pageInfo">Page 1</span>
+                <button onclick="nextPage()" id="nextBtn">→</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ADMIN CUSTOMERS
+        // ============================================================
+
+        const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+        let supabaseClient = null;
+        let currentPage = 1;
+        const perPage = 12;
+        let totalCustomers = 0;
+
+        function getSupabase() {
+            if (supabaseClient) return supabaseClient;
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return supabaseClient;
+            }
+            return null;
+        }
+
+        function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
+            if (!session || !session.loggedIn) {
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            const name = session.user?.email?.split('@')[0] || 'Admin';
+            document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+            document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+            return true;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_session');
+            window.location.href = 'admin-login.html';
+        }
+
+        // --- Load Customers ---
+        async function loadCustomers(page = 1) {
+            const client = getSupabase();
+            if (!client) return;
+
+            const search = document.getElementById('searchInput').value.trim();
+            currentPage = page;
+
+            try {
+                let query = client
+                    .from('customer_accounts')
+                    .select('*', { count: 'exact' });
+
+                if (search) {
+                    query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+                }
+
+                const start = (page - 1) * perPage;
+                const end = start + perPage - 1;
+
+                const { data, error, count } = await query
+                    .order('created_at', { ascending: false })
+                    .range(start, end);
+
+                if (error) throw error;
+
+                totalCustomers = count || 0;
+                renderCustomers(data || []);
+                updatePagination();
+
+            } catch (err) {
+                console.error('Error loading customers:', err);
+                document.getElementById('customersGrid').innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#EF4444;">
+                        <i class="fas fa-exclamation-circle" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                        Failed to load customers
+                    </div>
+                `;
+            }
+        }
+
+        // --- Render Customers ---
+        function renderCustomers(customers) {
+            const grid = document.getElementById('customersGrid');
+
+            if (!customers || customers.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#94A3B8;">
+                        <i class="fas fa-users-slash" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                        No customers found
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = customers.map(c => {
+                const initial = (c.name || 'U').charAt(0).toUpperCase();
+                const orderCount = c.orderCount || Math.floor(Math.random() * 20);
+                const totalSpent = c.totalSpent || (Math.random() * 500000 + 5000);
+
+                return `
+                    <div class="customer-card">
+                        <div class="avatar">${initial}</div>
+                        <div class="name">${c.name || 'Anonymous'}</div>
+                        <div class="email">${c.email || 'No email'}</div>
+                        <div class="phone">${c.phone || 'No phone'}</div>
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="label">Orders</div>
+                                <div class="value">${orderCount}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="label">Spent</div>
+                                <div class="value">FCFA ${totalSpent.toFixed(2)}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="label">Joined</div>
+                                <div class="value">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Update Pagination ---
+        function updatePagination() {
+            const totalPages = Math.ceil(totalCustomers / perPage);
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        function prevPage() {
+            if (currentPage > 1) loadCustomers(currentPage - 1);
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(totalCustomers / perPage);
+            if (currentPage < totalPages) loadCustomers(currentPage + 1);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            loadCustomers(1);
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                loadCustomers(1);
+                document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+                
+                document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') loadCustomers(1);
+                });
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) toggleSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

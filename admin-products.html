@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product List · Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0F172A; }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: #0F172A;
+            color: white;
+            padding: 24px 16px;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .brand { display: flex; align-items: center; gap: 12px; padding: 0 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
+        .sidebar .brand .logo { width: 40px; height: 40px; background: linear-gradient(135deg, #6C3CE1, #5A2FC4); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
+        .sidebar .brand .name { font-weight: 700; font-size: 16px; }
+        .sidebar .brand .name span { color: #8B6BE8; }
+        .sidebar .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px;
+            color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.2s ease;
+            font-size: 14px; font-weight: 500; margin-bottom: 2px; cursor: pointer;
+        }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar .nav-item.active { background: rgba(108,60,225,0.2); color: #8B6BE8; }
+        .sidebar .nav-item i { width: 20px; font-size: 16px; }
+        .sidebar .nav-section { padding: 12px 14px 8px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar .logout-btn { margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; }
+        .sidebar .logout-btn .nav-item { color: rgba(255,255,255,0.4); }
+        .sidebar .logout-btn .nav-item:hover { color: #EF4444; background: rgba(239,68,68,0.1); }
+        .main-content { margin-left: 260px; padding: 24px 32px; width: 100%; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid #E2E8F0; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .topbar h1 { font-size: 24px; font-weight: 800; }
+        .topbar .admin-info { display: flex; align-items: center; gap: 12px; }
+        .topbar .admin-info .avatar { width: 40px; height: 40px; border-radius: 50%; background: #6C3CE1; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
+        .filter-bar {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+            padding: 12px 16px; background: white; border-radius: 12px; border: 1px solid #f0f0f0;
+        }
+        .filter-bar input { flex: 1; min-width: 150px; padding: 8px 14px; border: 2px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; font-family: inherit; }
+        .filter-bar input:focus { border-color: #6C3CE1; }
+        .filter-bar select { padding: 8px 14px; border: 2px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; outline: none; font-family: inherit; background: white; }
+        .filter-bar button { padding: 8px 16px; background: #6C3CE1; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s ease; }
+        .filter-bar button:hover { background: #5A2FC4; }
+        .filter-bar button.secondary { background: #E2E8F0; color: #475569; }
+        .filter-bar button.secondary:hover { background: #CBD5E1; }
+        .products-table { background: white; border-radius: 16px; border: 1px solid #f0f0f0; overflow: hidden; }
+        .products-table table { width: 100%; border-collapse: collapse; }
+        .products-table th { text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #E2E8F0; background: #f8fafc; }
+        .products-table td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .products-table tr:hover td { background: #f8fafc; }
+        .products-table .product-img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }
+        .products-table .status-badge { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 12px; display: inline-block; }
+        .status-badge.in-stock { background: #D1FAE5; color: #059669; }
+        .status-badge.low-stock { background: #FEF3C7; color: #D97706; }
+        .status-badge.out-of-stock { background: #FEE2E2; color: #DC2626; }
+        .status-badge.deal { background: #FEF3C7; color: #D97706; border: 1px solid #F59E0B; }
+        .products-table .action-btn { padding: 4px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s ease; margin-right: 4px; }
+        .products-table .action-btn.edit { background: #DBEAFE; color: #2563EB; }
+        .products-table .action-btn.edit:hover { background: #2563EB; color: white; }
+        .products-table .action-btn.delete { background: #FEE2E2; color: #DC2626; }
+        .products-table .action-btn.delete:hover { background: #DC2626; color: white; }
+        .deal-input { width: 60px; padding: 4px 6px; border: 2px solid #E2E8F0; border-radius: 6px; font-size: 13px; font-weight: 600; outline: none; text-align: center; }
+        .deal-input:focus { border-color: #6C3CE1; }
+        .deal-btn { padding: 4px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s ease; }
+        .deal-btn.save { background: #D1FAE5; color: #059669; }
+        .deal-btn.save:hover { background: #059669; color: white; }
+        .deal-btn.remove { background: #FEE2E2; color: #DC2626; }
+        .deal-btn.remove:hover { background: #DC2626; color: white; }
+        .deal-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #FEF3C7; color: #D97706; border: 1px solid #F59E0B; }
+        .price-original { text-decoration: line-through; color: #94A3B8; font-size: 12px; margin-right: 6px; }
+        .price-discount { color: #DC2626; font-weight: 700; }
+        .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; border-top: 1px solid #f1f5f9; }
+        .pagination button { padding: 6px 14px; border: 2px solid #E2E8F0; border-radius: 8px; background: white; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s ease; }
+        .pagination button:hover { border-color: #6C3CE1; color: #6C3CE1; }
+        .pagination button.active { background: #6C3CE1; color: white; border-color: #6C3CE1; }
+        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .mobile-toggle { display: none; background: none; border: none; font-size: 24px; color: #0F172A; cursor: pointer; padding: 8px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+        .toast-msg { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 90%; text-align: center; animation: toastUp 0.3s ease; font-family: 'Inter', sans-serif; color: white; }
+        .toast-msg.success { background: #10B981; }
+        .toast-msg.error { background: #EF4444; }
+        @keyframes toastUp { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        .toast-msg.hide { opacity: 0; transform: translateX(-50%) translateY(-20px); transition: all 0.3s ease; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 16px; }
+            .mobile-toggle { display: block; }
+            .topbar h1 { font-size: 20px; }
+            .products-table { overflow-x: auto; display: block; }
+            .products-table table { min-width: 750px; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand"><div class="logo">ST</div><div class="name">Sucess<span>Tech</span></div></div>
+        <div class="nav-section">Main</div>
+        <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+        <a href="admin-analytics.html" class="nav-item"><i class="fas fa-chart-line"></i> Analytics</a>
+        <a href="admin-orders.html" class="nav-item"><i class="fas fa-shopping-bag"></i> Orders</a>
+        <a href="admin-customers.html" class="nav-item"><i class="fas fa-users"></i> Customers</a>
+        <a href="admin-reviews.html" class="nav-item"><i class="fas fa-star"></i> Reviews</a>
+        <div class="nav-section">Products</div>
+        <a href="admin-add-product.html" class="nav-item"><i class="fas fa-plus-circle"></i> Add Product</a>
+        <a href="admin-products.html" class="nav-item active"><i class="fas fa-boxes"></i> Product List</a>
+        <div class="nav-section">Settings</div>
+        <a href="admin-business-info.html" class="nav-item"><i class="fas fa-store"></i> Business Info</a>
+        <a href="admin-featured.html" class="nav-item"><i class="fas fa-star"></i> Featured Product</a>
+        <a href="admin-contact.html" class="nav-item"><i class="fas fa-map-marker-alt"></i> Contact & Location</a>
+               <a href="admin-category-showcase.html" class="nav-item active"><i class="fas fa-layer-group"></i> Category Showcase</a>
+        <div class="logout-btn"><div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="topbar">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h1>📦 Product List</h1>
+            </div>
+            <div class="admin-info">
+                <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
+                <div class="avatar" id="adminAvatar">A</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="Search products..." />
+            <select id="categoryFilter">
+                <option value="">All Categories</option>
+            </select>
+            <button onclick="loadProducts(1)"><i class="fas fa-search"></i> Filter</button>
+            <button class="secondary" onclick="resetFilters()">Reset</button>
+            <a href="admin-add-product.html" style="padding:8px 16px;background:#10B981;color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
+                <i class="fas fa-plus"></i> New
+            </a>
+        </div>
+
+        <!-- Products Table -->
+        <div class="products-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Brand</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Deal of Day</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsBody">
+                    <tr>
+                        <td colspan="8" style="text-align:center;padding:40px;color:#94A3B8;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading products...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination" id="pagination">
+                <button onclick="prevPage()" id="prevBtn">←</button>
+                <span id="pageInfo">Page 1</span>
+                <button onclick="nextPage()" id="nextBtn">→</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // ============================================================
+    //  ADMIN PRODUCTS with DEAL OF THE DAY (Supabase only)
+    // ============================================================
+
+    const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+    let supabaseClient = null;
+    let currentPage = 1;
+    const perPage = 10;
+    let totalProducts = 0;
+    let currentProducts = [];
+    let dealsMap = new Map();
+
+    function getSupabase() {
+        if (supabaseClient) return supabaseClient;
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            return supabaseClient;
+        }
+        return null;
+    }
+
+    function checkAuth() {
+        const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
+        if (!session || !session.loggedIn) {
+            window.location.href = 'admin-login.html';
+            return false;
+        }
+        const name = session.user?.email?.split('@')[0] || 'Admin';
+        document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+        document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+        return true;
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+
+    function logout() {
+        localStorage.removeItem('admin_session');
+        window.location.href = 'admin-login.html';
+    }
+
+    function showToast(msg, type = 'success') {
+        const existing = document.querySelector('.toast-msg');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = `toast-msg ${type}`;
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- Fetch deals from Supabase ---
+    async function fetchDeals() {
+        const client = getSupabase();
+        if (!client) return;
+        try {
+            const { data, error } = await client.from('deals').select('*');
+            if (error) throw error;
+            dealsMap = new Map((data || []).map(d => [d.product_id, d.discount]));
+        } catch (err) {
+            console.warn('Could not fetch deals:', err);
+            dealsMap = new Map();
+        }
+    }
+
+    // --- Load categories for filter ---
+    async function loadCategoryFilter() {
+        const client = getSupabase();
+        if (!client) return;
+        try {
+            const { data, error } = await client.from('products').select('category');
+            if (error) throw error;
+            const cats = new Set();
+            data.forEach(row => { if (row.category) cats.add(row.category); });
+            const select = document.getElementById('categoryFilter');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">All Categories</option>';
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        } catch (err) { console.warn('Could not load categories:', err); }
+    }
+
+    // --- Load products ---
+    async function loadProducts(page = 1) {
+        const client = getSupabase();
+        if (!client) return;
+
+        await fetchDeals();
+
+        const search = document.getElementById('searchInput').value.trim();
+        const category = document.getElementById('categoryFilter').value;
+        currentPage = page;
+
+        try {
+            let query = client.from('products').select('*', { count: 'exact' });
+
+            if (search) {
+                query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,description.ilike.%${search}%`);
+            }
+            if (category) {
+                query = query.eq('category', category);
+            }
+
+            const start = (page - 1) * perPage;
+            const end = start + perPage - 1;
+
+            const { data, error, count } = await query
+                .order('created_at', { ascending: false })
+                .range(start, end);
+
+            if (error) throw error;
+
+            currentProducts = data || [];
+            totalProducts = count || 0;
+            renderProducts(currentProducts);
+            updatePagination();
+
+        } catch (err) {
+            console.error('Error loading products:', err);
+            document.getElementById('productsBody').innerHTML = `
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:#EF4444;">
+                    <i class="fas fa-exclamation-circle"></i> Failed to load products
+                </td></tr>
+            `;
+        }
+    }
+
+    // --- Render products ---
+    function renderProducts(products) {
+        const body = document.getElementById('productsBody');
+
+        if (!products || products.length === 0) {
+            body.innerHTML = `
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:#94A3B8;">
+                    <i class="fas fa-box-open" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                    No products found
+                </td></tr>
+            `;
+            return;
+        }
+
+        body.innerHTML = products.map(p => {
+            const stockStatus = p.stock > 10 ? 'in-stock' : p.stock > 0 ? 'low-stock' : 'out-of-stock';
+            const statusLabel = p.stock > 10 ? 'In Stock' : p.stock > 0 ? 'Low Stock' : 'Out of Stock';
+            const image = p.image || 'https://placehold.co/48x48/6C3CE1/FFFFFF?text=Product';
+            const dealDiscount = dealsMap.get(p.id);
+            const hasDeal = dealDiscount !== undefined && dealDiscount !== null;
+            const originalPrice = p.price || 0;
+            const discountedPrice = hasDeal ? originalPrice * (1 - dealDiscount / 100) : originalPrice;
+
+            // Price display with deal styling
+            let priceHtml = `<strong>FCFA ${discountedPrice.toFixed(2)}</strong>`;
+            if (hasDeal) {
+                priceHtml = `
+                    <span class="price-original">FCFA ${originalPrice.toFixed(2)}</span>
+                    <span class="price-discount">FCFA ${discountedPrice.toFixed(2)}</span>
+                    <span class="deal-badge ml-1">-${dealDiscount}%</span>
+                `;
+            }
+
+            return `
+                <tr data-product-id="${p.id}" data-original-price="${originalPrice}">
+                    <td><img src="${image}" alt="${p.name}" class="product-img" onerror="this.src='https://placehold.co/48x48/6C3CE1/FFFFFF?text=Product'" /></td>
+                    <td><strong>${p.name || 'Unknown'}</strong></td>
+                    <td>${p.brand || '-'}</td>
+                    <td class="price-cell" data-id="${p.id}">${priceHtml}</td>
+                    <td>${p.stock || 0}</td>
+                    <td>
+                        <span class="status-badge ${stockStatus}">${statusLabel}</span>
+                        ${hasDeal ? `<span class="status-badge deal ml-1">🔥 -${dealDiscount}%</span>` : ''}
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-1 flex-wrap">
+                            <input type="number" min="1" max="95" value="${hasDeal ? dealDiscount : ''}" 
+                                   placeholder="%" class="deal-input" data-id="${p.id}" />
+                            <button class="deal-btn save" data-id="${p.id}" data-action="save">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            ${hasDeal ? `<button class="deal-btn remove" data-id="${p.id}" data-action="remove"><i class="fas fa-times"></i></button>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="action-btn edit" onclick="editProduct('${p.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteProduct('${p.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // --- Deal event listeners ---
+        document.querySelectorAll('.deal-btn.save').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                const input = document.querySelector(`.deal-input[data-id="${id}"]`);
+                if (!input) return;
+                const discount = parseInt(input.value);
+                if (isNaN(discount) || discount < 1 || discount > 95) {
+                    showToast('Discount must be between 1 and 95', 'error');
+                    return;
+                }
+                await saveDeal(id, discount);
+            });
+        });
+
+        document.querySelectorAll('.deal-btn.remove').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                await removeDeal(id);
+            });
+        });
+
+        // Live preview on input change - updates price cell and status badge
+        document.querySelectorAll('.deal-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const id = this.dataset.id;
+                const val = parseInt(this.value);
+                const row = document.querySelector(`tr[data-product-id="${id}"]`);
+                if (!row) return;
+                const originalPrice = parseFloat(row.dataset.originalPrice) || 0;
+                const priceCell = row.querySelector('.price-cell');
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (!priceCell || !statusCell) return;
+
+                // Remove existing deal badge from status
+                let badge = statusCell.querySelector('.status-badge.deal');
+                
+                if (isNaN(val) || val < 1 || val > 95 || this.value === '') {
+                    // Show original price only
+                    priceCell.innerHTML = `<strong>FCFA ${originalPrice.toFixed(2)}</strong>`;
+                    if (badge) badge.remove();
+                    // Check if there's a real deal in map (for display after clearing input)
+                    if (dealsMap.has(id)) {
+                        const realDiscount = dealsMap.get(id);
+                        const realPrice = originalPrice * (1 - realDiscount / 100);
+                        priceCell.innerHTML = `
+                            <span class="price-original">FCFA ${originalPrice.toFixed(2)}</span>
+                            <span class="price-discount">FCFA ${realPrice.toFixed(2)}</span>
+                            <span class="deal-badge ml-1">-${realDiscount}%</span>
+                        `;
+                        if (!badge) {
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'status-badge deal ml-1';
+                            newBadge.textContent = `🔥 -${realDiscount}%`;
+                            statusCell.appendChild(newBadge);
+                        } else {
+                            badge.textContent = `🔥 -${realDiscount}%`;
+                        }
+                    }
+                    return;
+                }
+
+                // Update price with discount
+                const discountedPrice = originalPrice * (1 - val / 100);
+                priceCell.innerHTML = `
+                    <span class="price-original">FCFA ${originalPrice.toFixed(2)}</span>
+                    <span class="price-discount">FCFA ${discountedPrice.toFixed(2)}</span>
+                    <span class="deal-badge ml-1">-${val}%</span>
+                `;
+
+                // Update or create badge
+                if (badge) {
+                    badge.textContent = `🔥 -${val}%`;
+                } else {
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'status-badge deal ml-1';
+                    newBadge.textContent = `🔥 -${val}%`;
+                    statusCell.appendChild(newBadge);
+                }
+            });
+        });
+    }
+
+    // --- Save Deal ---
+    async function saveDeal(productId, discount) {
+        const client = getSupabase();
+        if (!client) { showToast('Database connection failed', 'error'); return; }
+
+        try {
+            const { error } = await client
+                .from('deals')
+                .upsert({ product_id: productId, discount: discount }, { onConflict: 'product_id' });
+
+            if (error) throw error;
+
+            dealsMap.set(productId, discount);
+            showToast(`✅ Deal set: ${discount}% off`);
+            loadProducts(currentPage);
+
+        } catch (err) {
+            console.error('Error saving deal:', err);
+            showToast('❌ Failed to save deal: ' + err.message, 'error');
+        }
+    }
+
+    // --- Remove Deal ---
+    async function removeDeal(productId) {
+        const client = getSupabase();
+        if (!client) { showToast('Database connection failed', 'error'); return; }
+
+        try {
+            const { error } = await client
+                .from('deals')
+                .delete()
+                .eq('product_id', productId);
+
+            if (error) throw error;
+
+            dealsMap.delete(productId);
+            showToast('🗑️ Deal removed');
+            loadProducts(currentPage);
+
+        } catch (err) {
+            console.error('Error removing deal:', err);
+            showToast('❌ Failed to remove deal: ' + err.message, 'error');
+        }
+    }
+
+    // --- Edit Product ---
+    function editProduct(id) {
+        window.location.href = `admin-edit-product.html?id=${id}`;
+    }
+
+    // --- Delete Product ---
+    async function deleteProduct(id) {
+        if (!confirm('Delete this product? This action cannot be undone.')) return;
+
+        const client = getSupabase();
+        if (!client) return;
+
+        try {
+            // Also remove from deals if exists
+            if (dealsMap.has(id)) {
+                await client.from('deals').delete().eq('product_id', id);
+                dealsMap.delete(id);
+            }
+
+            const { error } = await client.from('products').delete().eq('id', id);
+            if (error) throw error;
+
+            showToast('🗑️ Product deleted');
+            loadProducts(currentPage);
+
+        } catch (err) {
+            console.error('Error deleting product:', err);
+            showToast('❌ Failed to delete product', 'error');
+        }
+    }
+
+    // --- Pagination ---
+    function updatePagination() {
+        const totalPages = Math.ceil(totalProducts / perPage);
+        document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+        document.getElementById('prevBtn').disabled = currentPage <= 1;
+        document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+    }
+
+    function prevPage() { if (currentPage > 1) loadProducts(currentPage - 1); }
+    function nextPage() { const total = Math.ceil(totalProducts / perPage); if (currentPage < total) loadProducts(currentPage + 1); }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('categoryFilter').value = '';
+        loadProducts(1);
+    }
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', async function() {
+        if (!checkAuth()) return;
+        document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+
+        await loadCategoryFilter();
+        await fetchDeals();
+        await loadProducts(1);
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') loadProducts(1);
+        });
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('open')) toggleSidebar();
+        }
+    });
+</script>
+</body>
+</html>

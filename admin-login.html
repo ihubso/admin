@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login · Sucess Technology</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            max-width: 420px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+        .login-container .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-container .logo .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 4px 16px rgba(108,60,225,0.3);
+        }
+        .login-container .logo h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+        }
+        .login-container .logo p {
+            font-size: 14px;
+            color: #94A3B8;
+            margin-top: 4px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            color: #1E293B;
+            margin-bottom: 4px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .form-group input:focus {
+            border-color: #6C3CE1;
+            box-shadow: 0 0 0 4px rgba(108,60,225,0.1);
+        }
+        .form-group input.error {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+        }
+        .form-group .error-msg {
+            color: #EF4444;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 4px;
+            display: none;
+        }
+        .form-group .error-msg.visible { display: block; }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(108,60,225,0.3);
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(108,60,225,0.4);
+        }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .admin-badge {
+            display: inline-block;
+            background: #FEF3C7;
+            color: #D97706;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 90%;
+            text-align: center;
+            animation: toastUp 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+        .toast-msg.success { background: #10B981; }
+        .toast-msg.error { background: #EF4444; }
+        @keyframes toastUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        .toast-msg.hide {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo">
+            <div class="logo-icon">ST</div>
+            <h1>Admin Panel</h1>
+            <p>Sign in to manage your store</p>
+            <span class="admin-badge" style="margin-top:8px;">🔒 Secure Access</span>
+        </div>
+
+        <form id="adminLoginForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="adminEmail" placeholder="admin@sucesstechnology.com" />
+                <div class="error-msg" id="emailError">Please enter a valid email</div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter your password" />
+                <div class="error-msg" id="passwordError">Password is required</div>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <i class="fas fa-lock"></i> Sign In
+            </button>
+        </form>
+
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:#94A3B8;">
+            <i class="fas fa-shield-alt" style="color:#6C3CE1;"></i>
+            Protected by Supabase Auth
+        </p>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ADMIN LOGIN
+        // ============================================================
+
+        const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+        let supabaseClient = null;
+
+        function getSupabase() {
+            if (supabaseClient) return supabaseClient;
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return supabaseClient;
+            }
+            return null;
+        }
+
+        // --- Admin credentials (for demo - in production use Supabase Auth) ---
+        const ADMIN_EMAIL = 'admin@sucesstechnology.com';
+        const ADMIN_PASSWORD = 'Admin123!';
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const btn = document.getElementById('loginBtn');
+            let isValid = true;
+
+            // Validate
+            if (!email || !email.includes('@')) {
+                document.getElementById('adminEmail').classList.add('error');
+                document.getElementById('emailError').classList.add('visible');
+                isValid = false;
+            } else {
+                document.getElementById('adminEmail').classList.remove('error');
+                document.getElementById('emailError').classList.remove('visible');
+            }
+
+            if (!password || password.length < 6) {
+                document.getElementById('adminPassword').classList.add('error');
+                document.getElementById('passwordError').classList.add('visible');
+                isValid = false;
+            } else {
+                document.getElementById('adminPassword').classList.remove('error');
+                document.getElementById('passwordError').classList.remove('visible');
+            }
+
+            if (!isValid) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+            try {
+                // Try Supabase Auth first
+                const client = getSupabase();
+                if (client) {
+                    const { data, error } = await client.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+                    if (!error && data.user) {
+                        // Check if user has admin role (you can add a custom claim or check a table)
+                        localStorage.setItem('admin_session', JSON.stringify({
+                            user: data.user,
+                            loggedIn: true,
+                            timestamp: Date.now()
+                        }));
+                        window.location.href = 'admin-dashboard.html';
+                        return;
+                    }
+                }
+
+                // Fallback: Check hardcoded admin credentials
+                if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+                    localStorage.setItem('admin_session', JSON.stringify({
+                        user: { email: email, role: 'admin' },
+                        loggedIn: true,
+                        timestamp: Date.now()
+                    }));
+                    window.location.href = 'admin-dashboard.html';
+                    return;
+                }
+
+                showToast('❌ Invalid email or password', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> Sign In';
+
+            } catch (err) {
+                showToast('❌ Login failed: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> Sign In';
+            }
+        });
+
+        function showToast(msg, type = 'success') {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Check if already logged in
+        const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
+        if (session && session.loggedIn) {
+            // Check if session is still valid (24 hours)
+            if (Date.now() - session.timestamp < 24 * 60 * 60 * 1000) {
+                window.location.href = 'admin-dashboard.html';
+            } else {
+                localStorage.removeItem('admin_session');
+            }
+        }
+    </script>
+</body>
+</html>

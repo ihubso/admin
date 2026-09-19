@@ -1,0 +1,15 @@
+﻿# Dependencies
+node_modules/
+
+
+
+# Environment variables (DO NOT UPLOAD THESE TO GITHUB!)
+.env
+
+# OS files
+.DS_Store
+
+# Logs
+*.logc
+
+public/newfeture/

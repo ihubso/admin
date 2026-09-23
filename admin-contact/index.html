@@ -12,26 +12,12 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0F172A; }
         .admin-layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px;
-            background: #0F172A;
-            color: white;
-            padding: 24px 16px;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            overflow-y: auto;
-            z-index: 100;
-            transition: transform 0.3s ease;
-        }
+        .sidebar { width: 260px; background: #0F172A; color: white; padding: 24px 16px; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; transition: transform 0.3s ease; }
         .sidebar .brand { display: flex; align-items: center; gap: 12px; padding: 0 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
         .sidebar .brand .logo { width: 40px; height: 40px; background: linear-gradient(135deg, #6C3CE1, #5A2FC4); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
         .sidebar .brand .name { font-weight: 700; font-size: 16px; }
         .sidebar .brand .name span { color: #8B6BE8; }
-        .sidebar .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px;
-            color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.2s ease;
-            font-size: 14px; font-weight: 500; margin-bottom: 2px; cursor: pointer;
-        }
+        .sidebar .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.2s ease; font-size: 14px; font-weight: 500; margin-bottom: 2px; cursor: pointer; }
         .sidebar .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
         .sidebar .nav-item.active { background: rgba(108,60,225,0.2); color: #8B6BE8; }
         .sidebar .nav-item i { width: 20px; font-size: 16px; }
@@ -48,10 +34,7 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-weight: 600; font-size: 13px; color: #1E293B; margin-bottom: 4px; }
         .form-group label .required { color: #EF4444; }
-        .form-group input, .form-group textarea {
-            width: 100%; padding: 10px 14px; border: 2px solid #E2E8F0; border-radius: 8px;
-            font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s ease; font-family: inherit;
-        }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px 14px; border: 2px solid #E2E8F0; border-radius: 8px; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s ease; font-family: inherit; }
         .form-group input:focus, .form-group textarea:focus { border-color: #6C3CE1; box-shadow: 0 0 0 4px rgba(108,60,225,0.1); }
         .form-group input[type="file"] { padding: 8px; border: 2px dashed #E2E8F0; background: #f8fafc; cursor: pointer; }
         .form-group input[type="file"]:hover { border-color: #6C3CE1; background: #f1f5f9; }
@@ -60,12 +43,7 @@
         .btn-submit { padding: 12px 32px; background: linear-gradient(135deg, #6C3CE1, #5A2FC4); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; transition: all 0.3s ease; font-family: inherit; box-shadow: 0 4px 12px rgba(108,60,225,0.3); }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,60,225,0.4); }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .toast-msg {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-            padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 14px;
-            z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 90%; text-align: center;
-            animation: toastUp 0.3s ease; font-family: 'Inter', sans-serif; color: white;
-        }
+        .toast-msg { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 90%; text-align: center; animation: toastUp 0.3s ease; font-family: 'Inter', sans-serif; color: white; }
         .toast-msg.success { background: #10B981; }
         .toast-msg.error { background: #EF4444; }
         @keyframes toastUp { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -74,6 +52,8 @@
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
         .image-preview { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid #E2E8F0; margin-top: 8px; }
         .image-preview.hidden { display: none; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #E2E8F0; border-top-color: #6C3CE1; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); width: 280px; }
             .sidebar.open { transform: translateX(0); }
@@ -91,7 +71,6 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="admin-layout">
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="brand"><div class="logo">ST</div><div class="name">Sucess<span>Tech</span></div></div>
         <div class="nav-section">Main</div>
@@ -107,11 +86,10 @@
         <a href="/admin-business-info/" class="nav-item"><i class="fas fa-store"></i> Business Info</a>
         <a href="/admin-featured/" class="nav-item"><i class="fas fa-star"></i> Featured Product</a>
         <a href="/admin-contact/" class="nav-item active"><i class="fas fa-map-marker-alt"></i> Contact & Location</a>
-               <a href="/admin-category-showcase/" class="nav-item active"><i class="fas fa-layer-group"></i> Category Showcase</a>
+        <a href="/admin-category-showcase/" class="nav-item"><i class="fas fa-layer-group"></i> Category Showcase</a>
         <div class="logout-btn"><div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</div></div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
         <div class="topbar">
             <div style="display:flex;align-items:center;gap:12px;">
@@ -124,9 +102,13 @@
             </div>
         </div>
 
-        <!-- Form -->
         <div class="form-container">
-            <form id="contactForm" enctype="multipart/form-data">
+            <div id="loadingState" style="text-align:center;padding:20px;color:#94A3B8;">
+                <div class="loading-spinner"></div>
+                <span style="vertical-align:middle;">Loading contact info...</span>
+            </div>
+
+            <form id="contactForm" enctype="multipart/form-data" style="display:none;">
                 <div class="form-group">
                     <label>Shop Description</label>
                     <textarea id="shopDescription" rows="3" placeholder="Describe your shop, location, and what you offer..."></textarea>
@@ -155,10 +137,10 @@
                 <div class="form-group">
                     <label>Shop Photo</label>
                     <input type="file" id="shopPhotoUpload" accept="image/*" />
-                    <div class="help-text">Upload a shop photo (will be stored in Supabase Storage)</div>
+                    <div class="help-text">Upload a shop photo (uploaded to Cloudinary)</div>
                     <input type="hidden" id="shopPhotoField" name="shop_photo" value="" />
                     <div id="shopPhotoPreviewContainer" class="mt-2">
-                        <img id="shopPhotoPreview" class="image-preview hidden" />
+                        <img id="shopPhotoPreview" class="image-preview hidden" alt="" />
                         <div id="shopPhotoPlaceholder" class="text-sm text-slate-400 flex items-center gap-2">
                             <i class="fas fa-image"></i> No photo uploaded
                         </div>
@@ -176,244 +158,216 @@
 </div>
 
 <script>
-    // ============================================================
-    //  ADMIN CONTACT & LOCATION with PHOTO UPLOAD
-    // ============================================================
+// ============================================================
+//  ADMIN CONTACT & LOCATION — Supabase Auth + RPC
+// ============================================================
+const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+const LOGIN_URL = '/login/';
 
-    const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
-
-    let supabaseClient = null;
-    let uploadedPhotoUrl = '';
-
-    function getSupabase() {
-        if (supabaseClient) return supabaseClient;
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            return supabaseClient;
-        }
-        return null;
-    }
-      const CLOUDINARY_CONFIG = {
+const CLOUDINARY_CONFIG = {
     cloudName: 'ucwlkkl7',
     uploadPreset: 'all images',
-    folder: 'products',
-    maxFileSize: 10485760,
-    allowedFormats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg']
-  };
+    shopPhotoFolder: 'shop-photos',   // ✅ dedicated folder
+    maxFileSize: 10485760
+};
 
+const getsb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function checkAuth() {
-        const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
-        if (!session || !session.loggedIn) {
-            window.location.href = 'index.html';
-            return false;
+// ---------- Sidebar ----------
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+window.toggleSidebar = toggleSidebar;
+
+document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar.classList.contains('open')) toggleSidebar();
+    }
+});
+
+// ---------- Auth ----------
+async function checkAuth() {
+    try {
+        const { data: { session } } = await getsb.auth.getSession();
+        if (!session) { window.location.href = LOGIN_URL; return null; }
+
+        const { data: me, error } = await getsb.rpc('admin_me');
+        if (error || !me || me.length === 0) {
+            await getsb.auth.signOut();
+            window.location.href = LOGIN_URL;
+            return null;
         }
-        const name = session.user?.email?.split('@')[0] || 'Admin';
-        document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-        document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
-        return true;
+        const admin = me[0];
+        const displayName = admin.full_name || admin.email || 'Admin';
+        document.getElementById('adminName').textContent = displayName;
+        document.getElementById('adminAvatar').textContent = displayName.charAt(0).toUpperCase();
+        return admin;
+    } catch (err) {
+        console.error('checkAuth error:', err);
+        window.location.href = LOGIN_URL;
+        return null;
     }
+}
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebarOverlay').classList.toggle('active');
-    }
+async function logout() {
+    try { await getsb.auth.signOut(); } catch (_) {}
+    window.location.href = LOGIN_URL;
+}
+window.logout = logout;
 
-    function logout() {
-        localStorage.removeItem('admin_session');
-        window.location.href = 'index.html';
-    }
+// ---------- Helpers ----------
+function showToast(msg, type = 'success') {
+    const existing = document.querySelector('.toast-msg');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = `toast-msg ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 
-    function showToast(msg, type = 'success') {
-        const existing = document.querySelector('.toast-msg');
-        if (existing) existing.remove();
-        const toast = document.createElement('div');
-        toast.className = `toast-msg ${type}`;
-        toast.textContent = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('hide');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
-    // --- Image helpers ---
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => resolve(ev.target.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function compressImage(base64String, maxWidth = 800, quality = 0.7) {
-        return new Promise((resolve) => {
-            if (!base64String.startsWith('data:')) { resolve(base64String); return; }
-            const img = new Image();
-            img.onload = () => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width, height = img.height;
-                    if (width > maxWidth) { height = (maxWidth / width) * height; width = maxWidth; }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressed = canvas.toDataURL('image/jpeg', quality);
-                    resolve(compressed.length < base64String.length ? compressed : base64String);
-                } catch (e) { resolve(base64String); }
-            };
-            img.onerror = () => resolve(base64String);
-            img.src = base64String;
-        });
-    }
-
-async function uploadToCloudinary(file, folder = 'shop-photos') {
+async function uploadToCloudinary(file, folder) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
     formData.append('folder', folder);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData
-      });
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error.message || 'Cloudinary upload failed');
-      }
-      return data.secure_url;
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
+            { method: 'POST', body: formData }
+        );
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message || 'Cloudinary upload failed');
+        return data.secure_url;
     } catch (err) {
-      console.error('Cloudinary upload error:', err);
-      return null;
+        console.error('Cloudinary upload error:', err);
+        return null;
     }
+}
+
+function setPhotoPreview(url) {
+    const preview = document.getElementById('shopPhotoPreview');
+    const placeholder = document.getElementById('shopPhotoPlaceholder');
+    if (url) {
+        preview.src = url;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+    } else {
+        preview.src = '';
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
     }
+}
 
-    // --- Load Contact Info ---
-    async function loadContactInfo() {
-        const client = getSupabase();
-        if (!client) return;
+// ---------- Load Contact Info (RPC) ----------
+async function loadContactInfo() {
+    try {
+        // ✅ SECURE: SECURITY DEFINER RPC, safe with 0 rows
+        const { data, error } = await getsb.rpc('admin_get_contact_info');
+        if (error) throw error;
 
-        try {
-            const { data, error } = await client
-                .from('contact_info')
-                .select('*')
-                .eq('id', 1)
-                .single();
+        if (data && typeof data === 'object') {
+            document.getElementById('shopDescription').value = data.description || '';
+            document.getElementById('shopLatitude').value    = data.latitude    || '';
+            document.getElementById('shopLongitude').value   = data.longitude   || '';
+            document.getElementById('shopHours').value       = data.hours       || '';
 
-            if (error) throw error;
-
-            if (data) {
-                document.getElementById('shopDescription').value = data.description || '';
-                document.getElementById('shopLatitude').value = data.latitude || '';
-                document.getElementById('shopLongitude').value = data.longitude || '';
-                document.getElementById('shopHours').value = data.hours || '';
-                
-                // Handle photo
-                if (data.shop_photo) {
-                    uploadedPhotoUrl = data.shop_photo;
-                    document.getElementById('shopPhotoField').value = data.shop_photo;
-                    const preview = document.getElementById('shopPhotoPreview');
-                    preview.src = data.shop_photo;
-                    preview.classList.remove('hidden');
-                    document.getElementById('shopPhotoPlaceholder').classList.add('hidden');
-                }
-            }
-
-        } catch (err) {
-            console.error('Error loading contact info:', err);
-            // Not showing error toast here - it's okay if no data exists yet
-        }
-    }
-
-    // --- Handle photo upload ---
-    document.getElementById('shopPhotoUpload').addEventListener('change', async function() {
-        const file = this.files[0];
-        if (!file) return;
-
-        try {
-            if (file.size > CLOUDINARY_CONFIG.maxFileSize) {
-                throw new Error('File size exceeds 10MB limit');
-            }
-            const url = await uploadToCloudinary(file, CLOUDINARY_CONFIG.folder);
-            
-            if (url) {
-                uploadedPhotoUrl = url;
-                document.getElementById('shopPhotoField').value = url;
-                const preview = document.getElementById('shopPhotoPreview');
-                preview.src = url;
-                preview.classList.remove('hidden');
-                document.getElementById('shopPhotoPlaceholder').classList.add('hidden');
-                showToast('✅ Photo uploaded successfully');
+            if (data.shop_photo) {
+                document.getElementById('shopPhotoField').value = data.shop_photo;
+                setPhotoPreview(data.shop_photo);
             } else {
-                showToast('❌ Failed to upload photo', 'error');
+                setPhotoPreview('');
             }
-        } catch (err) {
-            console.error('Error uploading photo:', err);
-            showToast('❌ Failed to upload photo: ' + err.message, 'error');
-        }
-    });
-
-    // --- Save Contact Info ---
-    document.getElementById('contactForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const client = getSupabase();
-        if (!client) {
-            showToast('❌ Database connection failed', 'error');
-            return;
         }
 
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('contactForm').style.display = 'block';
 
-        try {
-            // Use the uploaded photo URL if available, otherwise keep existing
-            const photoUrl = document.getElementById('shopPhotoField').value || '';
+    } catch (err) {
+        console.error('Error loading contact info:', err);
+        document.getElementById('loadingState').innerHTML = `
+            <i class="fas fa-exclamation-circle" style="font-size:24px;color:#EF4444;display:block;margin-bottom:8px;"></i>
+            Failed to load contact info: ${err.message}
+        `;
+    }
+}
 
-            const data = {
-                description: document.getElementById('shopDescription').value.trim() || '',
-                latitude: document.getElementById('shopLatitude').value.trim() || null,
-                longitude: document.getElementById('shopLongitude').value.trim() || null,
-                hours: document.getElementById('shopHours').value.trim() || '',
-                shop_photo: photoUrl
-            };
+// ---------- Photo upload ----------
+document.getElementById('shopPhotoUpload').addEventListener('change', async function () {
+    const file = this.files[0];
+    if (!file) return;
 
-            const { error } = await client
-                .from('contact_info')
-                .upsert({ id: 1, ...data });
-
-            if (error) throw error;
-
-            showToast('✅ Contact info saved successfully!');
-            btn.innerHTML = '<i class="fas fa-save"></i> Save Contact Info';
-            btn.disabled = false;
-
-        } catch (err) {
-            console.error('Error saving contact info:', err);
-            showToast('❌ Failed to save: ' + err.message, 'error');
-            btn.innerHTML = '<i class="fas fa-save"></i> Save Contact Info';
-            btn.disabled = false;
+    try {
+        if (file.size > CLOUDINARY_CONFIG.maxFileSize) {
+            throw new Error('File exceeds 10MB limit');
         }
-    });
 
-    // --- Init ---
-    document.addEventListener('DOMContentLoaded', function() {
-        if (checkAuth()) {
-            loadContactInfo();
-            document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
-        }
-    });
+        // ✅ FIXED: uploads to 'shop-photos', not 'products'
+        const url = await uploadToCloudinary(file, CLOUDINARY_CONFIG.shopPhotoFolder);
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar.classList.contains('open')) toggleSidebar();
+        if (url) {
+            document.getElementById('shopPhotoField').value = url;
+            setPhotoPreview(url);
+            showToast('✅ Photo uploaded successfully');
+        } else {
+            showToast('❌ Failed to upload photo', 'error');
         }
-    });
+    } catch (err) {
+        console.error('Error uploading photo:', err);
+        showToast('❌ ' + (err.message || 'Failed to upload photo'), 'error');
+    }
+});
+
+// ---------- Save Contact Info (RPC) ----------
+document.getElementById('contactForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const payload = {
+            description: document.getElementById('shopDescription').value.trim() || '',
+            latitude:    document.getElementById('shopLatitude').value.trim()    || '',
+            longitude:   document.getElementById('shopLongitude').value.trim()   || '',
+            hours:       document.getElementById('shopHours').value.trim()       || '',
+            shop_photo:  document.getElementById('shopPhotoField').value         || ''
+        };
+
+        // ✅ SECURE: SECURITY DEFINER RPC — bypasses contact_info RLS
+        const { error } = await getsb.rpc('admin_save_contact_info', {
+            p_payload: payload
+        });
+        if (error) throw error;
+
+        showToast('✅ Contact info saved successfully!');
+
+    } catch (err) {
+        console.error('Error saving contact info:', err);
+        showToast('❌ ' + (err.message || 'Failed to save'), 'error');
+    } finally {
+        btn.innerHTML = '<i class="fas fa-save"></i> Save Contact Info';
+        btn.disabled = false;
+    }
+});
+
+// ---------- Boot ----------
+document.addEventListener('DOMContentLoaded', async function () {
+    const admin = await checkAuth();
+    if (!admin) return;
+
+    loadContactInfo();
+});
 </script>
+<script src="/push-client.js"></script>
 </body>
 </html>

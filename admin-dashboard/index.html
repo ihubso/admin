@@ -175,6 +175,126 @@
         }
         .stat-card .stat-change.positive { color: #10B981; }
         .stat-card .stat-change.negative { color: #EF4444; }
+
+        /* ---------- Panel grid (Most Viewed + Trending) ---------- */
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #f0f0f0;
+        }
+        .panel .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .panel .panel-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel .panel-header h3 i { color: #6C3CE1; }
+        .panel .panel-header a {
+            font-size: 13px;
+            color: #6C3CE1;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .panel .panel-header a:hover { text-decoration: underline; }
+
+        .mv-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .mv-item:last-child { border-bottom: none; }
+        .mv-item .mv-rank {
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            color: #64748B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .mv-item:nth-child(1) .mv-rank { background: #FEF3C7; color: #D97706; }
+        .mv-item:nth-child(2) .mv-rank { background: #E2E8F0; color: #475569; }
+        .mv-item:nth-child(3) .mv-rank { background: #FED7AA; color: #C2410C; }
+        .mv-item .mv-img {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #f1f5f9;
+            flex-shrink: 0;
+        }
+        .mv-item .mv-info { flex: 1; min-width: 0; }
+        .mv-item .mv-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #0F172A;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mv-item .mv-meta {
+            font-size: 11px;
+            color: #94A3B8;
+            margin-top: 2px;
+        }
+        .mv-item .mv-views {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #6C3CE1;
+            flex-shrink: 0;
+        }
+
+        .ts-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .ts-item:last-child { border-bottom: none; }
+        .ts-item .ts-query {
+            flex: 1;
+            color: #0F172A;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ts-item .ts-count {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        /* ---------- Recent section (orders + activity) ---------- */
         .recent-section {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -256,6 +376,16 @@
         .activity-item .activity-text { font-size: 13px; color: #475569; }
         .activity-item .activity-text strong { color: #0F172A; }
         .activity-item .activity-time { font-size: 11px; color: #94A3B8; margin-left: auto; }
+
+        .loading-row, .empty-row {
+            text-align: center;
+            padding: 24px;
+            color: #94A3B8;
+            font-size: 13px;
+        }
+        .loading-row i { font-size: 20px; display: block; margin-bottom: 8px; }
+        .empty-row i { font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.6; }
+
         .mobile-toggle {
             display: none;
             background: none;
@@ -271,6 +401,9 @@
             inset: 0;
             background: rgba(0,0,0,0.4);
             z-index: 99;
+        }
+        @media (max-width: 900px) {
+            .panel-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
             .sidebar {
@@ -349,10 +482,9 @@
             <a href="/admin-contact/" class="nav-item">
                 <i class="fas fa-map-marker-alt"></i> Contact & Location
             </a>
-                        <a href="/admin-category-showcase/" class="nav-item">
+            <a href="/admin-category-showcase/" class="nav-item">
                 <i class="fas fa-layer-group"></i> Category Showcase
             </a>
-
 
             <div class="logout-btn">
                 <div class="nav-item" onclick="logout()">
@@ -375,6 +507,9 @@
                     <button id="enableNotificationsBtn" onclick="enableAdminNotifications()" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;background:white;color:#475569;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">
                         <i class="fas fa-bell"></i> Enable notifications
                     </button>
+                    <button onclick="loadDashboard()" style="padding:8px 14px;border:1px solid #E2E8F0;border-radius:8px;background:white;color:#475569;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
                     <span style="font-size:14px;color:#475569;" id="adminName">Admin</span>
                     <div class="avatar" id="adminAvatar">A</div>
                 </div>
@@ -384,31 +519,53 @@
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
-                    <div class="stat-number" id="totalOrders">0</div>
+                    <div class="stat-number" id="totalOrders">–</div>
                     <div class="stat-label">Total Orders</div>
-                    <div class="stat-change positive" id="ordersChange">+0% this month</div>
+                    <div class="stat-change positive" id="ordersChange"></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-users"></i></div>
-                    <div class="stat-number" id="totalCustomers">0</div>
+                    <div class="stat-number" id="totalCustomers">–</div>
                     <div class="stat-label">Total Customers</div>
-                    <div class="stat-change positive" id="customersChange">+0% this month</div>
+                    <div class="stat-change positive" id="customersChange"></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-boxes"></i></div>
-                    <div class="stat-number" id="totalProducts">0</div>
+                    <div class="stat-number" id="totalProducts">–</div>
                     <div class="stat-label">Total Products</div>
-                    <div class="stat-change" id="productsChange">0 active</div>
+                    <div class="stat-change" id="productsChange"></div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-star"></i></div>
-                    <div class="stat-number" id="totalRevenue">FCFA 0</div>
-                    <div class="stat-label">Total Revenue</div>
-                    <div class="stat-change positive" id="revenueChange">+0% this month</div>
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-number" id="totalRevenue">–</div>
+                    <div class="stat-label">Revenue (delivered)</div>
+                    <div class="stat-change positive" id="revenueChange"></div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
+            <!-- Most Viewed + Trending Searches -->
+            <div class="panel-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-fire"></i> Most Viewed Products</h3>
+                        <a href="/admin-products/">View All →</a>
+                    </div>
+                    <div id="mostViewed">
+                        <div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-search"></i> Trending Searches</h3>
+                    </div>
+                    <div id="trendingSearches">
+                        <div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders + Recent Activity -->
             <div class="recent-section">
                 <div class="recent-card">
                     <div class="card-header">
@@ -416,9 +573,7 @@
                         <a href="/admin-orders/">View All →</a>
                     </div>
                     <div id="recentOrders">
-                        <div style="text-align:center;padding:20px;color:#94A3B8;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading orders...
-                        </div>
+                        <div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading orders...</div>
                     </div>
                 </div>
                 <div class="recent-card">
@@ -426,9 +581,7 @@
                         <h3>Recent Activity</h3>
                     </div>
                     <div id="recentActivity">
-                        <div style="text-align:center;padding:20px;color:#94A3B8;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading activity...
-                        </div>
+                        <div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading activity...</div>
                     </div>
                 </div>
             </div>
@@ -437,211 +590,290 @@
 
     <script src="/push-client.js"></script>
     <script>
-        // ============================================================
-        //  ADMIN DASHBOARD
-        // ============================================================
+    // ============================================================
+    //  ADMIN DASHBOARD — Supabase Auth + Admin RPCs
+    // ============================================================
+    const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
 
-        const SUPABASE_URL = 'https://bulprhgwuwatzobiojwz.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+    const getsb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const LOGIN_URL = '/login/';
 
-        let supabaseClient = null;
+    let refreshTimer = null;
 
-        function getSupabase() {
-            if (supabaseClient) return supabaseClient;
-            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                return supabaseClient;
+    // ---------- Helpers ----------
+    function fmtMoney(n) {
+        n = Number(n) || 0;
+        return 'FCFA ' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function fmtDate(d) {
+        if (!d) return '–';
+        try { return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+        catch { return d; }
+    }
+    function escapeHtml(s) {
+        return String(s ?? '')
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+            .replace(/'/g,'&#39;');
+    }
+    function placeholderImg(txt = 'Product') {
+        return `https://placehold.co/100x100/6C3CE1/FFFFFF?text=${encodeURIComponent(txt)}`;
+    }
+
+    // ---------- Sidebar ----------
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+    window.toggleSidebar = toggleSidebar;
+
+    document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('open')) toggleSidebar();
+        }
+    });
+
+    // ---------- Logout ----------
+    async function logout() {
+        if (refreshTimer) clearInterval(refreshTimer);
+        try {
+            await getsb.auth.signOut();
+            sessionStorage.removeItem('st_admin_display');
+        } catch (_) {}
+        window.location.href = LOGIN_URL;
+    }
+    window.logout = logout;
+
+    // ---------- Admin Guard (Supabase Auth + admin_me RPC) ----------
+    async function checkAuth() {
+        try {
+            const { data: { session } } = await getsb.auth.getSession();
+            if (!session) {
+                window.location.href = LOGIN_URL;
+                return null;
             }
+
+            const { data: me, error } = await getsb.rpc('admin_me');
+            if (error || !me || me.length === 0) {
+                await getsb.auth.signOut();
+                window.location.href = LOGIN_URL;
+                return null;
+            }
+
+            const admin = me[0];
+            const displayName = admin.full_name || admin.email || 'Admin';
+            const initial = displayName.charAt(0).toUpperCase();
+
+            document.getElementById('adminName').textContent = displayName;
+            document.getElementById('adminAvatar').textContent = initial;
+
+            return admin;
+        } catch (err) {
+            console.error('checkAuth error:', err);
+            window.location.href = LOGIN_URL;
             return null;
         }
+    }
 
-        // --- Auth Check ---
-        function checkAuth() {
-            const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
-            if (!session || !session.loggedIn) {
-                window.location.href = 'index.html';
-                return false;
+    // ---------- Notifications ----------
+    async function enableAdminNotifications() {
+        const button = document.getElementById('enableNotificationsBtn');
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enabling...';
+
+        try {
+            if (typeof registerAdminPush === 'function') {
+                await registerAdminPush(getsb);
+            } else if (typeof window.registerAdminPush === 'function') {
+                await window.registerAdminPush(getsb);
+            } else {
+                throw new Error('Push client not loaded');
             }
-            // Update admin info
-            const name = session.user?.email?.split('@')[0] || 'Admin';
-            document.getElementById('adminName').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-            document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
-            return true;
+            button.innerHTML = '<i class="fas fa-check"></i> Notifications enabled';
+            button.style.color = '#059669';
+        } catch (error) {
+            console.error('Unable to enable admin notifications:', error);
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-bell"></i> Enable notifications';
+            alert(error.message || 'Unable to enable notifications');
+        }
+    }
+    window.enableAdminNotifications = enableAdminNotifications;
+
+    // ---------- Stats ----------
+    async function loadStats() {
+        const { data, error } = await getsb.rpc('admin_dashboard_stats');
+        if (error) { console.error('stats error', error); return; }
+
+        const s = Array.isArray(data) ? data[0] : data;
+        if (!s) return;
+
+        document.getElementById('totalOrders').textContent    = s.total_orders ?? 0;
+        document.getElementById('totalCustomers').textContent = s.total_customers ?? 0;
+        document.getElementById('totalProducts').textContent  = s.total_products ?? 0;
+        document.getElementById('totalRevenue').textContent   = fmtMoney(s.total_revenue);
+        document.getElementById('orderBadge').textContent     = s.pending_orders ?? 0;
+
+        document.getElementById('ordersChange').textContent    = `+${s.orders_this_month ?? 0} this month`;
+        document.getElementById('customersChange').textContent = `+${s.customers_this_month ?? 0} this month`;
+        document.getElementById('productsChange').textContent  = `${(s.total_views ?? 0).toLocaleString()} total views`;
+        document.getElementById('revenueChange').textContent   = `${fmtMoney(s.revenue_this_month)} this month`;
+    }
+
+    // ---------- Most Viewed ----------
+    async function loadMostViewed() {
+        const el = document.getElementById('mostViewed');
+        el.innerHTML = `<div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading…</div>`;
+
+        const { data, error } = await getsb.rpc('admin_most_viewed_products', { p_limit: 8 });
+        if (error) {
+            console.error('most-viewed error', error);
+            el.innerHTML = `<div class="empty-row"><i class="fas fa-exclamation-circle"></i> Failed to load</div>`;
+            return;
         }
 
-        // --- Toggle Sidebar ---
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
+        if (!data || data.length === 0) {
+            el.innerHTML = `<div class="empty-row"><i class="fas fa-eye"></i> No products yet</div>`;
+            return;
         }
 
-        // --- Logout ---
-        function logout() {
-            localStorage.removeItem('admin_session');
-            window.location.href = 'index.html';
-        }
-
-        async function enableAdminNotifications() {
-            const button = document.getElementById('enableNotificationsBtn');
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enabling...';
-
-            try {
-                await registerAdminPush(getSupabase());
-                button.innerHTML = '<i class="fas fa-check"></i> Notifications enabled';
-                button.style.color = '#059669';
-            } catch (error) {
-                console.error('Unable to enable admin notifications:', error);
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-bell"></i> Enable notifications';
-                alert(error.message || 'Unable to enable notifications');
-            }
-        }
-
-        // --- Load Dashboard Data ---
-        async function loadDashboard() {
-            const client = getSupabase();
-            if (!client) return;
-
-            try {
-                // Get orders count
-                const { count: ordersCount, error: ordersError } = await client
-                    .from('orders')
-                    .select('*', { count: 'exact', head: true });
-
-                // Get customers count
-                const { count: customersCount, error: customersError } = await client
-                    .from('customer_accounts')
-                    .select('*', { count: 'exact', head: true });
-
-                // Get products count
-                const { count: productsCount, error: productsError } = await client
-                    .from('products')
-                    .select('*', { count: 'exact', head: true });
-
-                // Get recent orders
-                const { data: recentOrders, error: recentError } = await client
-                    .from('orders')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(5);
-
-                // Get revenue
-                const { data: revenueData, error: revenueError } = await client
-                    .from('orders')
-                    .select('total')
-                    .eq('status', 'delivered');
-
-                let totalRevenue = 0;
-                if (revenueData) {
-                    totalRevenue = revenueData.reduce((sum, o) => sum + (o.total || 0), 0);
-                }
-
-                // Update stats
-                document.getElementById('totalOrders').textContent = ordersCount || 0;
-                document.getElementById('totalCustomers').textContent = customersCount || 0;
-                document.getElementById('totalProducts').textContent = productsCount || 0;
-                document.getElementById('totalRevenue').textContent = `FCFA ${totalRevenue.toFixed(2)}`;
-
-                // Update order badge
-                document.getElementById('orderBadge').textContent = ordersCount || 0;
-
-                // Render recent orders
-                renderRecentOrders(recentOrders);
-
-                // Render activity
-                renderRecentActivity(recentOrders);
-
-            } catch (err) {
-                console.error('Error loading dashboard:', err);
-            }
-        }
-
-        // --- Render Recent Orders ---
-        function renderRecentOrders(orders) {
-            const container = document.getElementById('recentOrders');
-
-            if (!orders || orders.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:20px;color:#94A3B8;">
-                        <i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-                        No orders yet
+        el.innerHTML = data.map((p, i) => `
+            <div class="mv-item">
+                <div class="mv-rank">${i + 1}</div>
+                <img class="mv-img"
+                     src="${escapeHtml(p.image || placeholderImg('Product'))}"
+                     onerror="this.src='${placeholderImg('Product')}'" alt="">
+                <div class="mv-info">
+                    <div class="mv-name">${escapeHtml(p.name || 'Unknown Product')}</div>
+                    <div class="mv-meta">
+                        ${p.brand ? escapeHtml(p.brand) + ' · ' : ''}${fmtMoney(p.price)}
                     </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = orders.map(order => `
-                <div class="order-item">
-                    <div class="order-info">
-                        <div class="order-id">#${order.id}</div>
-                        <div class="order-meta">${order.customer_name || 'Customer'} • FCFA ${(order.total || 0).toFixed(2)}</div>
-                    </div>
-                    <span class="order-status ${order.status || 'pending'}">${order.status || 'Pending'}</span>
                 </div>
-            `).join('');
+                <div class="mv-views"><i class="fas fa-eye"></i> ${p.view ?? 0}</div>
+            </div>
+        `).join('');
+    }
+
+    // ---------- Trending Searches ----------
+    async function loadTrendingSearches() {
+        const el = document.getElementById('trendingSearches');
+        el.innerHTML = `<div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading…</div>`;
+
+        const { data, error } = await getsb.rpc('admin_trending_searches', { p_limit: 10 });
+        if (error) {
+            console.error('trending error', error);
+            el.innerHTML = `<div class="empty-row"><i class="fas fa-exclamation-circle"></i> Failed to load</div>`;
+            return;
         }
 
-        // --- Render Recent Activity ---
-        function renderRecentActivity(orders) {
-            const container = document.getElementById('recentActivity');
-
-            if (!orders || orders.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:20px;color:#94A3B8;">
-                        <i class="fas fa-clock" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-                        No recent activity
-                    </div>
-                `;
-                return;
-            }
-
-            const activities = orders.slice(0, 4).map(order => {
-                const date = order.created_at ? new Date(order.created_at).toLocaleDateString() : 'Today';
-                const time = order.created_at ? new Date(order.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-                const icon = order.status === 'pending' ? 'orange' :
-                            order.status === 'cancelled' ? 'red' :
-                            order.status === 'delivered' ? 'green' : 'purple';
-                const iconClass = order.status === 'pending' ? 'fa-clock' :
-                                  order.status === 'cancelled' ? 'fa-times' :
-                                  order.status === 'delivered' ? 'fa-check' : 'fa-shopping-bag';
-                return `
-                    <div class="activity-item">
-                        <div class="activity-icon ${icon}"><i class="fas ${iconClass}"></i></div>
-                        <div class="activity-text">
-                            <strong>New order #${order.id}</strong>
-                            ${order.customer_name ? `by ${order.customer_name}` : ''}
-                        </div>
-                        <div class="activity-time">${date} ${time}</div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = activities;
+        if (!data || data.length === 0) {
+            el.innerHTML = `<div class="empty-row"><i class="fas fa-search"></i> No searches yet</div>`;
+            return;
         }
 
-        // --- Init ---
-        document.addEventListener('DOMContentLoaded', function() {
-            if (checkAuth()) {
-                loadDashboard();
+        el.innerHTML = data.map(s => `
+            <div class="ts-item">
+                <i class="fas fa-search" style="color:#94A3B8;font-size:12px;"></i>
+                <span class="ts-query">${escapeHtml(s.query)}</span>
+                <span class="ts-count">${s.count}</span>
+            </div>
+        `).join('');
+    }
 
-                // Refresh data every 30 seconds
-                setInterval(loadDashboard, 30000);
+    // ---------- Recent Orders ----------
+    async function loadRecentOrders() {
+        const el = document.getElementById('recentOrders');
+        el.innerHTML = `<div class="loading-row"><i class="fas fa-spinner fa-spin"></i> Loading…</div>`;
 
-                // Close sidebar on overlay click
-                document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
-            }
-        });
+        const { data, error } = await getsb.rpc('admin_recent_orders', { p_limit: 6 });
+        if (error) {
+            console.error('recent-orders error', error);
+            el.innerHTML = `<div class="empty-row"><i class="fas fa-exclamation-circle"></i> Failed to load</div>`;
+            return;
+        }
 
-        // Close sidebar on escape
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const sidebar = document.getElementById('sidebar');
-                if (sidebar.classList.contains('open')) {
-                    toggleSidebar();
-                }
-            }
-        });
+        if (!data || data.length === 0) {
+            el.innerHTML = `<div class="empty-row"><i class="fas fa-inbox"></i> No orders yet</div>`;
+            return;
+        }
+
+        el.innerHTML = data.map(o => `
+            <div class="order-item">
+                <div class="order-info">
+                    <div class="order-id">#${escapeHtml(o.id || 'N/A')}</div>
+                    <div class="order-meta">
+                        ${escapeHtml(o.customer_name || 'Customer')} · ${fmtMoney(o.total)} · ${fmtDate(o.created_at)}
+                    </div>
+                </div>
+                <span class="order-status ${escapeHtml(o.status || 'pending')}">
+                    ${escapeHtml(o.status || 'pending')}
+                </span>
+            </div>
+        `).join('');
+
+        // Feed recent activity from the same data
+        renderRecentActivity(data);
+    }
+
+    // ---------- Recent Activity ----------
+    function renderRecentActivity(orders) {
+        const container = document.getElementById('recentActivity');
+
+        if (!orders || orders.length === 0) {
+            container.innerHTML = `<div class="empty-row"><i class="fas fa-clock"></i> No recent activity</div>`;
+            return;
+        }
+
+        container.innerHTML = orders.slice(0, 5).map(order => {
+            const date = order.created_at ? new Date(order.created_at).toLocaleDateString() : 'Today';
+            const time = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
+            const iconClass = order.status === 'pending' ? 'orange' :
+                              order.status === 'cancelled' ? 'red' :
+                              order.status === 'delivered' ? 'green' : 'purple';
+            const iconFA = order.status === 'pending' ? 'fa-clock' :
+                           order.status === 'cancelled' ? 'fa-times' :
+                           order.status === 'delivered' ? 'fa-check' : 'fa-shopping-bag';
+            return `
+                <div class="activity-item">
+                    <div class="activity-icon ${iconClass}"><i class="fas ${iconFA}"></i></div>
+                    <div class="activity-text">
+                        <strong>Order #${escapeHtml(order.id || 'N/A')}</strong>
+                        ${order.customer_name ? `by ${escapeHtml(order.customer_name)}` : ''}
+                    </div>
+                    <div class="activity-time">${date} ${time}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ---------- Load everything ----------
+    async function loadDashboard() {
+        try {
+            await Promise.all([
+                loadStats(),
+                loadMostViewed(),
+                loadTrendingSearches(),
+                loadRecentOrders()
+            ]);
+        } catch (err) {
+            console.error('Error loading dashboard:', err);
+        }
+    }
+    window.loadDashboard = loadDashboard;
+
+    // ---------- Boot ----------
+    document.addEventListener('DOMContentLoaded', async function() {
+        const admin = await checkAuth();
+        if (!admin) return;
+
+        loadDashboard();
+
+        // Auto-refresh every 30 seconds
+        refreshTimer = setInterval(loadDashboard, 30000);
+    });
     </script>
 </body>
 </html>

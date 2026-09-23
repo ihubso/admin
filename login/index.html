@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login · Sucess Technology</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            max-width: 420px; width: 100%;
+            background: white; border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo .logo-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 28px; font-weight: 800; color: white;
+            box-shadow: 0 4px 16px rgba(108,60,225,0.3);
+        }
+        .logo h1 { font-size: 24px; font-weight: 800; color: #0F172A; }
+        .logo p  { font-size: 14px; color: #94A3B8; margin-top: 4px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-weight: 600; font-size: 13px;
+            color: #1E293B; margin-bottom: 4px;
+        }
+        .form-group input {
+            width: 100%; padding: 12px 16px;
+            border: 2px solid #E2E8F0; border-radius: 10px;
+            font-size: 14px; font-weight: 500;
+            outline: none; transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .form-group input:focus {
+            border-color: #6C3CE1;
+            box-shadow: 0 0 0 4px rgba(108,60,225,0.1);
+        }
+        .form-group input.error {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+        }
+        .error-msg {
+            color: #EF4444; font-size: 12px; font-weight: 500;
+            margin-top: 4px; display: none;
+        }
+        .error-msg.visible { display: block; }
+        .btn-login {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #6C3CE1, #5A2FC4);
+            color: white; border: none; border-radius: 10px;
+            font-weight: 700; font-size: 16px; cursor: pointer;
+            transition: all 0.3s ease; font-family: inherit;
+            box-shadow: 0 4px 12px rgba(108,60,225,0.3);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-login:hover  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,60,225,0.4); }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .admin-badge {
+            display: inline-block; background: #FEF3C7; color: #D97706;
+            padding: 2px 12px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        }
+        .toast-msg {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 24px; border-radius: 12px;
+            font-weight: 600; font-size: 14px; z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 90%; text-align: center;
+            animation: toastUp 0.3s ease;
+            font-family: 'Inter', sans-serif; color: white;
+        }
+        .toast-msg.success { background: #10B981; }
+        .toast-msg.error   { background: #EF4444; }
+        .toast-msg.info    { background: #3B82F6; }
+        @keyframes toastUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+        }
+        .toast-msg.hide {
+            opacity: 0; transform: translateX(-50%) translateY(-20px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo">
+            <div class="logo-icon">ST</div>
+            <h1>Admin Panel</h1>
+            <p>Sign in to manage your store</p>
+            <span class="admin-badge" style="margin-top:8px;">🔒 Secure Access</span>
+        </div>
+
+        <form id="adminLoginForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="adminEmail" placeholder="admin@sucesstechnology.com" autocomplete="username" />
+                <div class="error-msg" id="emailError">Please enter a valid email</div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter your password" autocomplete="current-password" />
+                <div class="error-msg" id="passwordError">Password is required</div>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <i class="fas fa-lock"></i> Sign In
+            </button>
+        </form>
+
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:#94A3B8;">
+            <i class="fas fa-shield-alt" style="color:#6C3CE1;"></i>
+            Protected by Supabase Auth
+        </p>
+    </div>
+
+    <script>
+    // ============================================================
+    //  ADMIN LOGIN — Supabase Auth + admin_users allowlist
+    // ============================================================
+    const bigURL = 'https://bulprhgwuwatzobiojwz.supabase.co';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1bHByaGd3dXdhdHpvYmlvand6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDczNDksImV4cCI6MjA5MjA4MzM0OX0.2fcHrGX7iXw5G9nGRNkBy70W1Ex_om1C0v3qbryPmvw';
+
+    const CLIENTBASE = window.supabase.createClient(bigURL, ANON_KEY);
+    const DASHBOARD_URL = '/admin-dashboard';
+
+    // ---------- Toast ----------
+    function showToast(msg, type = 'success') {
+        document.querySelector('.toast-msg')?.remove();
+        const toast = document.createElement('div');
+        toast.className = `toast-msg ${type}`;
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // ---------- Field helpers ----------
+    const emailEl    = document.getElementById('adminEmail');
+    const passwordEl = document.getElementById('adminPassword');
+    const emailErr   = document.getElementById('emailError');
+    const passwordErr = document.getElementById('passwordError');
+    const btn        = document.getElementById('loginBtn');
+
+    function resetFieldErrors() {
+        emailEl.classList.remove('error');
+        passwordEl.classList.remove('error');
+        emailErr.classList.remove('visible');
+        passwordErr.classList.remove('visible');
+    }
+
+    // ---------- Login submit ----------
+    document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        resetFieldErrors();
+
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+        let valid = true;
+
+        if (!email || !email.includes('@')) {
+            emailEl.classList.add('error');
+            emailErr.classList.add('visible');
+            valid = false;
+        }
+        if (!password || password.length < 6) {
+            passwordEl.classList.add('error');
+            passwordErr.classList.add('visible');
+            valid = false;
+        }
+        if (!valid) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+        try {
+          
+            const { data, error } = await CLIENTBASE.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                showToast('❌ ' + error.message, 'error');
+                return;
+            }
+
+            if (!data?.user) {
+                showToast('❌ Sign-in failed. Please try again.', 'error');
+                return;
+            }
+
+            // 2. Verify the user is in the admin_users allowlist
+            const { data: me, error: meErr } = await CLIENTBASE.rpc('admin_me');
+
+            if (meErr) {
+                console.error('admin_me error:', meErr);
+                await CLIENTBASE.auth.signOut();
+                showToast('❌ Could not verify admin access.', 'error');
+                return;
+            }
+
+            if (!me || me.length === 0) {
+                await CLIENTBASE.auth.signOut();
+                showToast('🚫 This account does not have admin access.', 'error');
+                return;
+            }
+
+            // 3. Success
+            const admin = me[0];
+            showToast(`✅ Welcome back, ${admin.full_name || admin.email}`, 'success');
+
+       
+            try {
+                sessionStorage.setItem('st_admin_display', JSON.stringify({
+                    email: admin.email,
+                    full_name: admin.full_name,
+                    role: admin.role
+                }));
+            } catch (_) {}
+
+            setTimeout(() => { window.location.href = DASHBOARD_URL; }, 400);
+        } catch (err) {
+            console.error(err);
+            showToast('❌ Login failed: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Sign In';
+        }
+    });
+
+    // ---------- Already logged in? Skip login ----------
+    (async function redirectIfAlreadyAdmin() {
+        try {
+            const { data: { session } } = await CLIENTBASE.auth.getSession();
+            if (!session) return;
+
+            const { data: me } = await CLIENTBASE.rpc('admin_me');
+            if (me && me.length > 0) {
+                window.location.href = DASHBOARD_URL;
+            } else {
+                // A session exists but the user isn't an admin — sign them out
+                await CLIENTBASE.auth.signOut();
+            }
+        } catch (_) {}
+    })();
+    </script>
+</body>
+</html>

@@ -145,11 +145,16 @@
 
                     <!-- Category (combobox: type new or pick existing) -->
                     <div class="form-group">
-                        <label>Category <span class="required">*</span></label>
-                        <input type="text" id="productCategoryText" list="categoryDatalist"
-                               placeholder="Type a new category or pick one…" required autocomplete="off" />
+                        <label>Categories <span class="required">*</span> <small style="color:#94A3B8;font-weight:400;">(max 5 · first = primary · shown in breadcrumb)</small></label>
+                        <div id="categoryRows" class="space-y-2"></div>
+                        <button type="button" id="addCategoryBtn" class="text-sm text-indigo-600 hover:underline mt-2">
+                            <i class="fas fa-plus"></i> Add another category
+                        </button>
                         <datalist id="categoryDatalist"></datalist>
-                        <div class="help-text"><span id="categoryStatus"></span></div>
+                        <div class="help-text">
+                            Type <code>/</code> to nest · e.g. <code>Informatique/Chargeurs</code><br>
+                            <span id="categoryStatus"></span>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -440,8 +445,8 @@ function initLivePreview() {
 
 // ---------- Load dynamic options ----------
 async function loadDynamicOptions() {
+    // ---------- Brands (best-effort) ----------
     try {
-        // Brands from RPC
         const { data, error } = await getsb.rpc('admin_product_options');
         if (error) throw error;
         const brands = (data && data.brands) || [];
@@ -452,103 +457,181 @@ async function loadDynamicOptions() {
             opt.value = b;
             brandDatalist.appendChild(opt);
         });
+    } catch (err) {
+        console.warn('[brands] load failed:', err.message);
+    }
 
-        // Categories from the categories table
+    // ---------- Categories (independent — must always run) ----------
+    try {
         const { data: cats, error: catErr } = await getsb
             .from('categories')
             .select('id,name,slug_path')
             .eq('is_active', true)
-            .order('slug_path');
-        if (catErr) throw catErr;
+            .order('name');
 
-        allCategories = cats || [];
+        if (catErr) {
+            console.error('[categories] query error:', catErr);
+            throw catErr;
+        }
 
-        const datalist = document.getElementById('categoryDatalist');
-        datalist.innerHTML = '';
-        allCategories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.name;
-            if ((c.slug_path || []).length > 1) {
-                opt.label = (c.slug_path || []).join(' › ');
-            }
-            datalist.appendChild(opt);
-        });
+       allCategories = cats || [];
+
+const datalist = document.getElementById('categoryDatalist');
+datalist.innerHTML = '';
+allCategories.forEach(c => {
+    const np = (c.name_path && c.name_path.length) ? c.name_path : [c.name];
+    const opt = document.createElement('option');
+    opt.value = np.join('/');                  // "Informatique/Accessoires"
+    if (np.length > 1) opt.label = np.join(' › ');   // browser hint
+    datalist.appendChild(opt);
+});
     } catch (err) {
-        console.warn('Could not load dynamic options:', err);
+        console.error('[categories] load failed:', err.message);
+        allCategories = [];
     }
 }
 
-// ---------- Category resolution (existing or new) ----------
-async function resolveCategoryId() {
-    const text = document.getElementById('productCategoryText').value.trim();
-    if (!text) return null;
+/* ============================================================
+   MULTI-CATEGORY (max 5, first = primary)
+   ============================================================ */
+let categoryRowsState = [{ id: '', text: '' }];
+renderCategoryRows();
 
-    const found = allCategories.find(c => c.name.toLowerCase() === text.toLowerCase());
-    if (found) return found.id;
+function renderCategoryRows() {
+    const container = document.getElementById('categoryRows');
+    if (!container) return;
+    container.innerHTML = categoryRowsState.map((row, idx) => {
+        const isPrimary = idx === 0;
+        const canRemove = categoryRowsState.length > 1;
+        return `
+            <div class="flex gap-2 items-start" data-row="${idx}">
+                <div class="flex-1">
+                    <input type="text" class="category-row-input form-control"
+                           data-row="${idx}" list="categoryDatalist"
+                           autocomplete="off"
+                           style="width:100%;padding:10px 14px;border:2px solid #E2E8F0;border-radius:8px;font-family:inherit;font-size:14px;"
+                           placeholder="${isPrimary ? 'Primary category…' : 'Additional category…'}"
+                           value="${escapeHtml(row.text || '')}" />
+                    ${isPrimary ? '<div class="text-xs text-indigo-600 font-semibold mt-1"><i class="fas fa-star"></i> Primary — used for breadcrumb</div>' : ''}
+                </div>
+                ${canRemove ? `<button type="button" class="remove-category-btn text-red-500 hover:bg-red-50 p-2 rounded-lg" data-row="${idx}" title="Remove">🗑️</button>` : ''}
+            </div>
+        `;
+    }).join('');
 
-    const { data, error } = await getsb.rpc('admin_create_category', { p_name: text });
-    if (error) throw error;
-
-    await loadDynamicOptions();   // refresh local cache + datalist
-    return data;
-}
-
-function initCategoryStatusListener() {
-    const inp = document.getElementById('productCategoryText');
-    const status = document.getElementById('categoryStatus');
-    if (!inp || !status) return;
-    inp.addEventListener('input', () => {
-        const text = inp.value.trim();
-        if (!text) { status.textContent = ''; return; }
-        const found = allCategories.find(c => c.name.toLowerCase() === text.toLowerCase());
-        if (found) {
-            status.textContent = '✓ Existing category: ' + found.name;
-            status.style.color = '#10B981';
-        } else {
-            status.textContent = '+ Will create new category: "' + text + '"';
-            status.style.color = '#6C3CE1';
-        }
+    container.querySelectorAll('.category-row-input').forEach(inp => {
+        inp.addEventListener('input', () => {
+            const idx = parseInt(inp.dataset.row, 10);
+            categoryRowsState[idx].text = inp.value;
+            categoryRowsState[idx].id = '';
+            updateCategoryStatus();
+        });
     });
+    container.querySelectorAll('.remove-category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.row, 10);
+            categoryRowsState.splice(idx, 1);
+            renderCategoryRows();
+        });
+    });
+    updateCategoryStatus();
+    updateAddCategoryButton();
 }
 
-// ---------- Submit ----------
+function updateAddCategoryButton() {
+    const btn = document.getElementById('addCategoryBtn');
+    if (!btn) return;
+    const atMax = categoryRowsState.length >= 5;
+    btn.disabled = atMax;
+    btn.style.opacity = atMax ? '0.4' : '1';
+    btn.style.pointerEvents = atMax ? 'none' : 'auto';
+}
+
+function addCategoryRow() {
+    if (categoryRowsState.length >= 5) return;
+    categoryRowsState.push({ id: '', text: '' });
+    renderCategoryRows();
+}
+
+function updateCategoryStatus() {
+    const status = document.getElementById('categoryStatus');
+    if (!status) return;
+    const filled = categoryRowsState.filter(r => (r.text || '').trim());
+    if (!filled.length) { status.textContent = ''; return; }
+    status.textContent = `${filled.length} categor${filled.length === 1 ? 'y' : 'ies'} will be linked${filled.length > 1 ? ' (first is primary)' : ''}`;
+    status.style.color = '#6C3CE1';
+}
+
+async function resolveAllCategoryIds() {
+    const ids = [];
+    for (const row of categoryRowsState) {
+        const text = (row.text || '').trim();
+        if (!text) continue;
+
+        const parts = text.split('/').map(s => s.trim()).filter(Boolean);
+        const normalized = parts.join(' / ').toLowerCase();
+
+        const exact = allCategories.find(c => {
+            const np = ((c.name_path && c.name_path.length) ? c.name_path : [c.name]).join(' / ').toLowerCase();
+            return np === normalized;
+        });
+
+        if (exact) {
+            if (!ids.includes(exact.id)) ids.push(exact.id);
+            continue;
+        }
+
+        // Fallback: single leaf name lookup
+        if (parts.length === 1) {
+            const leaf = parts[0].toLowerCase();
+            const matches = allCategories.filter(c => c.name.toLowerCase() === leaf);
+            if (matches.length) {
+                const root = matches.find(c => !c.slug_path || c.slug_path.length === 1);
+                const id = (root || matches[0]).id;
+                if (!ids.includes(id)) ids.push(id);
+                continue;
+            }
+        }
+
+        // Create whole path
+        const { data, error } = await getsb.rpc('admin_create_category', { p_name: text });
+        if (error) throw error;
+        if (!ids.includes(data)) ids.push(data);
+        await loadDynamicOptions();
+    }
+
+    if (ids.length === 0) throw new Error('At least one category is required');
+    if (ids.length > 5) throw new Error('Maximum 5 categories per product');
+    return ids;
+}
 document.getElementById('addProductForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
 
-    const name         = document.getElementById('productName').value.trim();
-    const brand        = document.getElementById('productBrand').value.trim();
-    const price        = parseFloat(document.getElementById('productPrice').value);
-    const stock        = parseInt(document.getElementById('productStock').value, 10);
-    const categoryText = document.getElementById('productCategoryText').value.trim();
+const name  = document.getElementById('productName').value.trim();
+const brand = document.getElementById('productBrand').value.trim();
+const price = parseFloat(document.getElementById('productPrice').value);
+const stock = parseInt(document.getElementById('productStock').value, 10);
 
-    if (!name || !brand || isNaN(price) || isNaN(stock) || !categoryText) {
-        showToast('Please fill all required fields', 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
-        return;
-    }
+if (!name || !brand || isNaN(price) || isNaN(stock)) {
+    showToast('Please fill all required fields', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
+    return;
+}
 
-    // Resolve category (creates it if new)
-    let categoryId = null;
-    try {
-        categoryId = await resolveCategoryId();
-    } catch (err) {
-        console.error('Category resolve failed:', err);
-        showToast('❌ Could not save category: ' + (err.message || 'unknown'), 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
-        return;
-    }
-
-    if (!categoryId) {
-        showToast('Category is required', 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
-        return;
-    }
+let categoryIds = [];
+try {
+    categoryIds = await resolveAllCategoryIds();
+} catch (err) {
+    console.error('Category resolve failed:', err);
+    showToast('❌ ' + (err.message || 'Category error'), 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
+    return;
+}
 
     let mainImage = document.getElementById('mainImageField').value || 'https://placehold.co/600x400';
     let allImages = [...addedImages];
@@ -564,7 +647,7 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
         brand,
         price,
         stock,
-        category_id: categoryId,
+        category_ids: categoryIds,
         image: allImages[0] || 'https://placehold.co/600x400',
         images: allImages,
         description: document.getElementById('productDescription').value.trim() || '',
@@ -636,7 +719,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     initLivePreview();
-    initCategoryStatusListener();
+  renderCategoryRows();
+document.getElementById('addCategoryBtn').addEventListener('click', addCategoryRow);
 });
 </script>
 <script src="/push-client.js"></script>

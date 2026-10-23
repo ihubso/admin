@@ -117,6 +117,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 form-container">
                 <form id="addProductForm" enctype="multipart/form-data">
+
+                    <!-- Row 1: Product Name + Brand -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>Product Name <span class="required">*</span></label>
@@ -124,11 +126,12 @@
                         </div>
                         <div class="form-group">
                             <label>Brand <span class="required">*</span></label>
-                            <!-- ✅ REAL datalist (was a select, so autocomplete was broken) -->
                             <input type="text" id="productBrand" name="brand" list="brandDatalist" placeholder="Type or pick a brand" required autocomplete="off" />
                             <datalist id="brandDatalist"></datalist>
                         </div>
                     </div>
+
+                    <!-- Row 2: Price + Stock -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>Price (FCFA) <span class="required">*</span></label>
@@ -139,11 +142,14 @@
                             <input type="number" id="productStock" name="stock" placeholder="0" min="0" required />
                         </div>
                     </div>
+
+                    <!-- Category (combobox: type new or pick existing) -->
                     <div class="form-group">
                         <label>Category <span class="required">*</span></label>
-                        <!-- ✅ REAL datalist (was a select) -->
-                        <input type="text" id="productCategory" name="category" list="categoryDatalist" placeholder="Type or pick a category" required autocomplete="off" />
+                        <input type="text" id="productCategoryText" list="categoryDatalist"
+                               placeholder="Type a new category or pick one…" required autocomplete="off" />
                         <datalist id="categoryDatalist"></datalist>
+                        <div class="help-text"><span id="categoryStatus"></span></div>
                     </div>
 
                     <div class="form-group">
@@ -314,6 +320,7 @@ window.logout = logout;
 // ---------- Variants ----------
 let variantsList = [];
 let addedImages = [];
+let allCategories = [];   // [{id, name, slug_path}]
 
 function renderVariantsUI(containerId, list) {
     const container = document.getElementById(containerId);
@@ -431,33 +438,77 @@ function initLivePreview() {
     });
 }
 
-// ---------- Load dynamic options via RPC ----------
+// ---------- Load dynamic options ----------
 async function loadDynamicOptions() {
     try {
+        // Brands from RPC
         const { data, error } = await getsb.rpc('admin_product_options');
         if (error) throw error;
-
-        const categories = (data && data.categories) || [];
-        const brands     = (data && data.brands)     || [];
-
-        const categoryDatalist = document.getElementById('categoryDatalist');
-        const brandDatalist    = document.getElementById('brandDatalist');
-        categoryDatalist.innerHTML = '';
+        const brands = (data && data.brands) || [];
+        const brandDatalist = document.getElementById('brandDatalist');
         brandDatalist.innerHTML = '';
-
-        categories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c;
-            categoryDatalist.appendChild(opt);
-        });
         brands.forEach(b => {
             const opt = document.createElement('option');
             opt.value = b;
             brandDatalist.appendChild(opt);
         });
+
+        // Categories from the categories table
+        const { data: cats, error: catErr } = await getsb
+            .from('categories')
+            .select('id,name,slug_path')
+            .eq('is_active', true)
+            .order('slug_path');
+        if (catErr) throw catErr;
+
+        allCategories = cats || [];
+
+        const datalist = document.getElementById('categoryDatalist');
+        datalist.innerHTML = '';
+        allCategories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            if ((c.slug_path || []).length > 1) {
+                opt.label = (c.slug_path || []).join(' › ');
+            }
+            datalist.appendChild(opt);
+        });
     } catch (err) {
         console.warn('Could not load dynamic options:', err);
     }
+}
+
+// ---------- Category resolution (existing or new) ----------
+async function resolveCategoryId() {
+    const text = document.getElementById('productCategoryText').value.trim();
+    if (!text) return null;
+
+    const found = allCategories.find(c => c.name.toLowerCase() === text.toLowerCase());
+    if (found) return found.id;
+
+    const { data, error } = await getsb.rpc('admin_create_category', { p_name: text });
+    if (error) throw error;
+
+    await loadDynamicOptions();   // refresh local cache + datalist
+    return data;
+}
+
+function initCategoryStatusListener() {
+    const inp = document.getElementById('productCategoryText');
+    const status = document.getElementById('categoryStatus');
+    if (!inp || !status) return;
+    inp.addEventListener('input', () => {
+        const text = inp.value.trim();
+        if (!text) { status.textContent = ''; return; }
+        const found = allCategories.find(c => c.name.toLowerCase() === text.toLowerCase());
+        if (found) {
+            status.textContent = '✓ Existing category: ' + found.name;
+            status.style.color = '#10B981';
+        } else {
+            status.textContent = '+ Will create new category: "' + text + '"';
+            status.style.color = '#6C3CE1';
+        }
+    });
 }
 
 // ---------- Submit ----------
@@ -467,15 +518,35 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
 
-    const name     = document.getElementById('productName').value.trim();
-    const brand    = document.getElementById('productBrand').value.trim();
-    const price    = parseFloat(document.getElementById('productPrice').value);
-    const stock    = parseInt(document.getElementById('productStock').value, 10);
-    const category = document.getElementById('productCategory').value.trim();
+    const name         = document.getElementById('productName').value.trim();
+    const brand        = document.getElementById('productBrand').value.trim();
+    const price        = parseFloat(document.getElementById('productPrice').value);
+    const stock        = parseInt(document.getElementById('productStock').value, 10);
+    const categoryText = document.getElementById('productCategoryText').value.trim();
 
-    if (!name || !brand || isNaN(price) || isNaN(stock) || !category) {
+    if (!name || !brand || isNaN(price) || isNaN(stock) || !categoryText) {
         showToast('Please fill all required fields', 'error');
-        btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
+        return;
+    }
+
+    // Resolve category (creates it if new)
+    let categoryId = null;
+    try {
+        categoryId = await resolveCategoryId();
+    } catch (err) {
+        console.error('Category resolve failed:', err);
+        showToast('❌ Could not save category: ' + (err.message || 'unknown'), 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
+        return;
+    }
+
+    if (!categoryId) {
+        showToast('Category is required', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
         return;
     }
 
@@ -493,7 +564,7 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
         brand,
         price,
         stock,
-        category,
+        category_id: categoryId,
         image: allImages[0] || 'https://placehold.co/600x400',
         images: allImages,
         description: document.getElementById('productDescription').value.trim() || '',
@@ -508,9 +579,7 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
     };
 
     try {
-      const { data, error } = await getsb.rpc('admin_create_product', {
-            p_payload: productData
-        });
+        const { data, error } = await getsb.rpc('admin_create_product', { p_payload: productData });
         if (error) throw error;
         if (!data || !data.ok) throw new Error('Insert failed');
 
@@ -525,6 +594,7 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
             document.getElementById('mainImageField').value = '';
             document.getElementById('imagesJsonField').value = '[]';
             document.getElementById('multiImagePreviews').innerHTML = '';
+            document.getElementById('categoryStatus').textContent = '';
             renderVariantsUI('variantsContainer', variantsList);
             document.getElementById('previewMainImage').src = 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image';
             document.getElementById('previewName').textContent = 'Product Name';
@@ -536,8 +606,6 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Product';
             setTimeout(() => document.getElementById('addProductSuccess').classList.add('hidden'), 2000);
-
-            // Refresh datalist in case new brand/category was added
             loadDynamicOptions();
         }, 1500);
 
@@ -568,6 +636,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     initLivePreview();
+    initCategoryStatusListener();
 });
 </script>
 <script src="/push-client.js"></script>

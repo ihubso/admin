@@ -705,11 +705,9 @@ try {
             type: 'new_product',
             data: {                                      // full details for the service worker
                 productId: productData.id,
-                description,
-                price,
-                brand,
-                stock,
-                categories: categoryIds,
+                description: productData.description,
+                price: productData.price,
+                brand: productData.brand,
                 specs: productData.specs,
                 cpu: productData.cpu,
                 os: productData.os

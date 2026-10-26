@@ -700,7 +700,7 @@ try {
         window.sendGeneralPushNotification({
             title: `🆕 ${name}`,
             body: `${price} FCFA · ${brand}`,            // short, shown on lock screen
-            url: `/item/?${productData.id}`,
+            url: `/item/?product=${productData.id}`,
             image: productData.image || null,
             type: 'new_product',
             data: {                                      // full details for the service worker

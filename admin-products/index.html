@@ -548,7 +548,7 @@ async function saveDeal(productId, discount) {
                 .sendGeneralPushNotification({
                     title,
                     body,
-                    url: `/item/?${productId}`,
+                    url: `/item/?product=${productId}`,
                     image,
                     type: 'deal'
                 })

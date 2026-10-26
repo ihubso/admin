@@ -471,7 +471,7 @@ function renderProducts(products) {
         });
     });
 }
-async function sendGeneralPushNotification({ title, body, url = '/', image = null, type = 'general', data = null } = {}) {
+async function sendGeneralPushNotification({ title, body, url = '/', image = null, type = 'deal', data = null } = {}) {
         if (!title || !body) {
             throw new Error('A title and body are required to send a general notification.');
         }

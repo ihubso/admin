@@ -276,7 +276,7 @@ async function uploadToCloudinary(file, folder = 'products') {
         return null;
     }
 }
-async function sendGeneralPushNotification({ title, body, url = '/', image = null, type = 'general', data = null } = {}) {
+async function sendGeneralPushNotification({ title, body, url = '/', image = null, type = 'new_product', data = null } = {}) {
         if (!title || !body) {
             throw new Error('A title and body are required to send a general notification.');
         }

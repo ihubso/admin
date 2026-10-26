@@ -471,7 +471,38 @@ function renderProducts(products) {
         });
     });
 }
+async function sendGeneralPushNotification({ title, body, url = '/', image = null, type = 'general', data = null } = {}) {
+        if (!title || !body) {
+            throw new Error('A title and body are required to send a general notification.');
+        }
 
+        const client = await getsb;
+        const { data: sessionData, error: sessionError } = await client.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData?.session?.access_token) {
+            throw new Error('Sign in with an admin account before sending general notifications.');
+        }
+
+        // Renamed 'data' to 'invokeData' (or anything else) to avoid the conflict
+        const { data: invokeData, error } = await client.functions.invoke('send-general-push', {
+            body: {
+                title,
+                body,
+                url,
+                image,
+                type, 
+                data // refers to the parameter passed into the function
+            }
+        });
+
+        if (error) throw error;
+        if (!invokeData?.success) {
+            throw new Error(invokeData?.error || invokeData?.message || 'The general notification could not be delivered.');
+        }
+
+        return invokeData;
+    }
+// ---------- Sidebar ----------
 // ---------- Save / Remove deal ----------
 async function saveDeal(productId, discount) {
     try {
@@ -482,6 +513,49 @@ async function saveDeal(productId, discount) {
         if (error) throw error;
 
         showToast(`✅ Deal set: ${discount}% off`);
+
+        // 🔔 Notify all subscribers about the deal (French)
+        if (typeof window.sendGeneralPushNotification === 'function') {
+            // Grab the row so we can use the real product name + image + price
+            const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+            const name =
+                row?.querySelector('td:nth-child(2) strong')?.textContent.trim() ||
+                'Un produit';
+            const image =
+                row?.querySelector('img.product-img')?.getAttribute('src') || null;
+            const originalPrice =
+                parseFloat(row?.dataset.originalPrice || '0') || 0;
+            const newPrice = originalPrice
+                ? originalPrice * (1 - discount / 100)
+                : 0;
+            const fcfa = (n) =>
+                Number(n).toLocaleString('fr-FR', {
+                    maximumFractionDigits: 0
+                }) + ' FCFA';
+
+            const title = `🔥 Promo -${discount}% : ${name}`;
+
+            let body = '';
+            if (newPrice > 0) {
+                body =
+                    `Prix réduit : ${fcfa(newPrice)} au lieu de ${fcfa(originalPrice)}\n` +
+                    `Offre valable jusqu'à épuisement du stock !`;
+            } else {
+                body = `-${discount}% sur ${name}. Profitez-en vite !`;
+            }
+
+            window
+                .sendGeneralPushNotification({
+                    title,
+                    body,
+                    url: `/item/?${productId}`,
+                    image,
+                    type: 'deal'
+                })
+                .then((res) => console.log('🔔 deal push sent:', res))
+                .catch((err) => console.warn('🔕 deal push failed:', err));
+        }
+
         loadProducts(currentPage);
     } catch (err) {
         console.error('Error saving deal:', err);

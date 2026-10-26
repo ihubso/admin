@@ -276,7 +276,37 @@ async function uploadToCloudinary(file, folder = 'products') {
         return null;
     }
 }
+async function sendGeneralPushNotification({ title, body, url = '/', image = null, type = 'general', data = null } = {}) {
+        if (!title || !body) {
+            throw new Error('A title and body are required to send a general notification.');
+        }
 
+        const client = await getsb;
+        const { data: sessionData, error: sessionError } = await client.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData?.session?.access_token) {
+            throw new Error('Sign in with an admin account before sending general notifications.');
+        }
+
+        // Renamed 'data' to 'invokeData' (or anything else) to avoid the conflict
+        const { data: invokeData, error } = await client.functions.invoke('send-general-push', {
+            body: {
+                title,
+                body,
+                url,
+                image,
+                type, 
+                data // refers to the parameter passed into the function
+            }
+        });
+
+        if (error) throw error;
+        if (!invokeData?.success) {
+            throw new Error(invokeData?.error || invokeData?.message || 'The general notification could not be delivered.');
+        }
+
+        return invokeData;
+    }
 // ---------- Sidebar ----------
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
@@ -667,6 +697,25 @@ try {
         if (!data || !data.ok) throw new Error('Insert failed');
 
         showToast('✅ Product added to cloud!', 'success');
+        window.sendGeneralPushNotification({
+            title: `🆕 ${name}`,
+            body: `${price} FCFA · ${brand}`,            // short, shown on lock screen
+            url: `/item/?${productData.id}`,
+            image: productData.image || null,
+            type: 'new_product',
+            data: {                                      // full details for the service worker
+                productId: productData.id,
+                description,
+                price,
+                brand,
+                stock,
+                categories: categoryIds,
+                specs: productData.specs,
+                cpu: productData.cpu,
+                os: productData.os
+            }
+        });
+
         document.getElementById('successProductName').textContent = `"${name}" added.`;
         document.getElementById('addProductSuccess').classList.remove('hidden');
 

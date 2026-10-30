@@ -707,7 +707,25 @@
         const button = document.getElementById('enableNotificationsBtn');
 
         try {
-            const { data: isRegistered, error } = await getsb.rpc('admin_has_push_subscription');
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                throw new Error('Push notifications are not supported by this browser');
+            }
+
+            const registration = await navigator.serviceWorker.getRegistration('/');
+            const subscription = registration
+                ? await registration.pushManager.getSubscription()
+                : null;
+
+            if (!subscription) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-bell"></i> Enable notifications';
+                button.style.color = '#475569';
+                return;
+            }
+
+            const { data: isRegistered, error } = await getsb.rpc('admin_has_push_subscription', {
+                p_endpoint: subscription.endpoint
+            });
             if (error) throw error;
 
             if (isRegistered) {

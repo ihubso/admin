@@ -504,8 +504,8 @@
                     <h1>Dashboard</h1>
                 </div>
                 <div class="admin-info">
-                    <button id="enableNotificationsBtn" onclick="enableAdminNotifications()" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;background:white;color:#475569;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">
-                        <i class="fas fa-bell"></i> Enable notifications
+                    <button id="enableNotificationsBtn" onclick="enableAdminNotifications()" disabled style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;background:white;color:#475569;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">
+                        <i class="fas fa-spinner fa-spin"></i> Checking notifications...
                     </button>
                     <button onclick="loadDashboard()" style="padding:8px 14px;border:1px solid #E2E8F0;border-radius:8px;background:white;color:#475569;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">
                         <i class="fas fa-sync"></i> Refresh
@@ -703,6 +703,28 @@
     }
     window.enableAdminNotifications = enableAdminNotifications;
 
+    async function updateAdminNotificationButton() {
+        const button = document.getElementById('enableNotificationsBtn');
+
+        try {
+            const { data: isRegistered, error } = await getsb.rpc('admin_has_push_subscription');
+            if (error) throw error;
+
+            if (isRegistered) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-check"></i> Notifications enabled';
+                button.style.color = '#059669';
+                return;
+            }
+        } catch (error) {
+            console.error('Unable to check admin notification status:', error);
+        }
+
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-bell"></i> Enable notifications';
+        button.style.color = '#475569';
+    }
+
     // ---------- Stats ----------
     async function loadStats() {
         const { data, error } = await getsb.rpc('admin_dashboard_stats');
@@ -869,6 +891,7 @@
         const admin = await checkAuth();
         if (!admin) return;
 
+        await updateAdminNotificationButton();
         loadDashboard();
 
         // Auto-refresh every 30 seconds

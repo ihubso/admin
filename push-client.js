@@ -9,12 +9,7 @@
         return Uint8Array.from([...rawData].map(character => character.charCodeAt(0)));
     }
 
-    function getNotificationUserId() {
-        const session = JSON.parse(localStorage.getItem('admin_session') || 'null');
-        return session?.user?.id || session?.user?.email || 'admin@sucesstechnology.com';
-    }
-
-    async function registerPushSubscription(supabaseClient, userId) {
+    async function registerPushSubscription(supabaseClient) {
         if (!supabaseClient) throw new Error('Supabase is not available');
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
             throw new Error('Push notifications are not supported by this browser');
@@ -28,7 +23,8 @@
             throw new Error('Notification permission was not granted');
         }
 
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.register('/sw.js');
+        const registration = await navigator.serviceWorker.ready;
         let subscription = await registration.pushManager.getSubscription();
 
         if (!subscription) {
@@ -39,32 +35,15 @@
         }
 
         const subscriptionJson = subscription.toJSON();
-        const { data: existing, error: lookupError } = await supabaseClient
-            .from('push_subscriptions')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('endpoint', subscriptionJson.endpoint)
-            .maybeSingle();
-
-        if (lookupError) throw lookupError;
-
-        const record = {
-            user_id: userId,
-            subscription: subscriptionJson,
-            endpoint: subscriptionJson.endpoint
-        };
-
-        const query = existing?.id
-            ? supabaseClient.from('push_subscriptions').update(record).eq('id', existing.id)
-            : supabaseClient.from('push_subscriptions').insert(record);
-        const { error: saveError } = await query;
-
+        const { error: saveError } = await supabaseClient.rpc('admin_save_push_subscription', {
+            p_subscription: subscriptionJson
+        });
         if (saveError) throw saveError;
         return subscriptionJson;
     }
 
     window.registerPushSubscription = registerPushSubscription;
     window.registerAdminPush = function (supabaseClient) {
-        return registerPushSubscription(supabaseClient, getNotificationUserId());
+        return registerPushSubscription(supabaseClient);
     };
 })();
